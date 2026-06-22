@@ -1,10 +1,5 @@
-import { PlaceholderAuthScreen } from '../../components/placeholder-auth-screen';
+import { LoginScreen } from '../../components/login-screen';
 
 export default function LoginRoute() {
-  return (
-    <PlaceholderAuthScreen
-      description="Form login akan dibuat pada tahap implementasi autentikasi."
-      title="Masuk"
-    />
-  );
+  return <LoginScreen />;
 }
