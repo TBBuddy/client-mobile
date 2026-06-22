@@ -6,13 +6,10 @@ import { useAuth } from '../../context/auth-context';
 export default function TabsLayout() {
   const { status } = useAuth();
 
-  // Not authenticated — don't render tabs at all.
-  // After signOut() is called, this layout re-renders and redirects to welcome.
   if (status === 'unauthenticated') {
     return <Redirect href="/" />;
   }
 
-  // Still bootstrapping — render nothing until we know the session state.
   if (status === 'loading') {
     return null;
   }

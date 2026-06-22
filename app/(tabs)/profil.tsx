@@ -14,13 +14,10 @@ export default function ProfilRoute() {
     try {
       await AuthService.logout();
     } catch {
-      // API errors are safe to ignore — AuthService.logout() always clears
-      // the token in its own finally block regardless of network failure.
     } finally {
       setIsLoading(false);
     }
 
-    // Update auth state — AuthGuard in _layout.tsx handles the redirect to /.
     signOut();
   }
 

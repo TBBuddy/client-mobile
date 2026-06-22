@@ -38,7 +38,6 @@ export function LoginScreen() {
 
     try {
       const loginData = await AuthService.login({ identifier: identifier.trim(), password });
-      // Update auth state — AuthGuard in _layout.tsx handles the redirect to /(tabs).
       signIn(loginData.user);
     } catch (err) {
       if (err instanceof ApiError && err.code === "REQUEST_CANCELLED") return;

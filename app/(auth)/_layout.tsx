@@ -1,13 +1,12 @@
 import { Redirect, Stack } from 'expo-router';
 
-import { useAuth } from '../../context/auth-context';
+import { needsOnboarding, useAuth } from '../../context/auth-context';
 
 export default function AuthLayout() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
-  // Already authenticated — don't render login/register at all.
-  // After signIn() is called, this layout re-renders and redirects to tabs.
   if (status === 'authenticated') {
+    if (needsOnboarding(user)) return <Redirect href="/(onboarding)" />;
     return <Redirect href="/(tabs)" />;
   }
 

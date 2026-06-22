@@ -4,30 +4,17 @@ import { AuthService } from '../services/repository/auth-service';
 import { TokenStorage } from '../services/repository/token-storage';
 import type { AuthSessionUser } from '../services/repository/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
 type AuthContextValue = {
-  /** The currently logged-in user, or null if unauthenticated / still loading. */
   user: AuthSessionUser | null;
-  /**
-   * - `'loading'`        — bootstrap in progress (checking SecureStore + /auth/me)
-   * - `'authenticated'`  — valid session, user is set
-   * - `'unauthenticated'`— no token or token invalid/expired
-   */
   status: AuthStatus;
-  /** Call after a successful login to set the user and trigger navigation. */
   signIn: (user: AuthSessionUser) => void;
-  /** Call after logout to clear the user and trigger navigation. */
   signOut: () => void;
+  updateUser: (updates: Partial<AuthSessionUser>) => void;
 };
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthSessionUser | null>(null);
@@ -65,17 +52,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus('unauthenticated');
   }
 
+  function updateUser(updates: Partial<AuthSessionUser>) {
+    setUser((prev) => (prev ? { ...prev, ...updates } : null));
+  }
+
   return (
-    <AuthContext.Provider value={{ user, status, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, status, signIn, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');
   return ctx;
+}
+
+export function needsOnboarding(user: AuthSessionUser | null): boolean {
+  return user?.role === 'PATIENT' && user?.isOnboardingCompleted === false;
 }

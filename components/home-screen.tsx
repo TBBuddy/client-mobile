@@ -9,8 +9,6 @@ import { View as RNView } from "react-native";
 
 import { Pressable, ScrollView, Text, View } from "./tw";
 
-// ─── Static mock data (replace with real data later) ─────────────────────────
-
 const MOCK = {
   userName: "Rani",
   greeting: "Selamat pagi",
@@ -37,8 +35,6 @@ const WEEK_DAYS = [
   { day: "Min", date: 18, isToday: false, hasCheckin: false },
 ] as const;
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export function HomeScreen() {
   return (
     <ScrollView
@@ -48,7 +44,6 @@ export function HomeScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View className="gap-4">
-        {/* ── Header ─────────────────────────────────────────────────────── */}
         <View className="flex-row items-start justify-between">
           <View className="flex-1 gap-0.5 pr-4">
             <Text className="text-[22px] font-extrabold leading-7 text-brand-ink">
@@ -70,7 +65,6 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* ── Week Calendar ───────────────────────────────────────────────── */}
         <View className="flex-row justify-between rounded-card border border-brand-border bg-brand-white px-3 py-3">
           {WEEK_DAYS.map((item) => (
             <View className="items-center gap-1" key={item.day}>
@@ -105,9 +99,7 @@ export function HomeScreen() {
           ))}
         </View>
 
-        {/* ── Check-in Card ───────────────────────────────────────────────── */}
         <View className="rounded-card bg-brand-aqua p-5 gap-3">
-          {/* Badge */}
           <View className="flex-row justify-end">
             <View className="rounded-full bg-brand-yellow px-3 py-1">
               <Text className="text-[11px] font-bold text-brand-ink">
@@ -116,7 +108,6 @@ export function HomeScreen() {
             </View>
           </View>
 
-          {/* Content */}
           <View className="flex-row items-center gap-4">
             <View className="flex-1 gap-1">
               <Text className="text-[20px] font-extrabold leading-6 text-brand-ink">
@@ -129,7 +120,6 @@ export function HomeScreen() {
                 Jangan lupa minum obat sesuai jadwalmu.
               </Text>
             </View>
-            {/* Pill illustration placeholder */}
             <View
               className="h-20 w-20 items-center justify-center rounded-2xl bg-brand-white"
               style={{ opacity: 0.65 }}
@@ -138,7 +128,6 @@ export function HomeScreen() {
             </View>
           </View>
 
-          {/* CTA */}
           <Pressable
             accessibilityRole="button"
             className="h-12 items-center justify-center rounded-control bg-brand-ink"
@@ -149,9 +138,7 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* ── Treatment Progress ──────────────────────────────────────────── */}
         <View className="rounded-card border border-brand-border bg-brand-white p-5 gap-3">
-          {/* Title row */}
           <View className="flex-row items-center justify-between">
             <Text className="text-[15px] font-bold text-brand-ink">
               Perjalanan pengobatan
@@ -167,7 +154,6 @@ export function HomeScreen() {
             </Pressable>
           </View>
 
-          {/* Day count + percentage */}
           <View className="flex-row items-baseline justify-between">
             <Text
               className="text-[13px] text-brand-ink"
@@ -187,7 +173,6 @@ export function HomeScreen() {
             </Text>
           </View>
 
-          {/* Progress bar */}
           <View className="h-2 w-full overflow-hidden rounded-full bg-brand-border">
             <RNView
               style={{
@@ -199,7 +184,6 @@ export function HomeScreen() {
             />
           </View>
 
-          {/* Date range */}
           <Text
             className="text-[12px] text-brand-ink"
             style={{ opacity: 0.45 }}
@@ -208,9 +192,7 @@ export function HomeScreen() {
           </Text>
         </View>
 
-        {/* ── Stats Row ───────────────────────────────────────────────────── */}
         <View className="flex-row gap-3">
-          {/* Streak */}
           <View className="flex-1 rounded-card border border-brand-border bg-brand-white p-4 gap-1">
             <Text
               className="text-[12px] font-semibold text-brand-ink"
@@ -237,7 +219,6 @@ export function HomeScreen() {
             </Text>
           </View>
 
-          {/* Stock */}
           <View className="flex-1 rounded-card border border-brand-border bg-brand-white p-4 gap-1">
             <Text
               className="text-[12px] font-semibold text-brand-ink"
@@ -265,7 +246,6 @@ export function HomeScreen() {
           </View>
         </View>
 
-        {/* ── Insight ─────────────────────────────────────────────────────── */}
         <View className="gap-3">
           <Text className="text-[15px] font-bold text-brand-ink">
             Insight terbaru
