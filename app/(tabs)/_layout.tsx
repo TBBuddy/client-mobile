@@ -1,7 +1,19 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { CircleCheckBig, Home, User, Users } from 'lucide-react-native';
 
+import { useAuth } from '../../context/auth-context';
+
 export default function TabsLayout() {
+  const { status } = useAuth();
+
+  if (status === 'unauthenticated') {
+    return <Redirect href="/" />;
+  }
+
+  if (status === 'loading') {
+    return null;
+  }
+
   return (
     <Tabs
       screenOptions={{
