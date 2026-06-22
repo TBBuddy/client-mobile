@@ -1,0 +1,32 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
+
+@layer theme {
+  @theme {
+    --color-brand-aqua: #a3e7e2;
+    --color-brand-lilac: #c4a6c9;
+    --color-brand-yellow: #fff79d;
+    --color-brand-white: #ffffff;
+    --color-brand-ink: #263238;
+    --color-brand-mist: #f5fbfa;
+    --color-brand-border: #d9e5e5;
+
+    --font-sans: system-ui, sans-serif;
+    --radius-card: 24px;
+    --radius-control: 16px;
+  }
+}
+
+@media android {
+  :root {
+    --font-sans: sans-serif;
+  }
+}
+
+@media ios {
+  :root {
+    --font-sans: system-ui;
+  }
+}

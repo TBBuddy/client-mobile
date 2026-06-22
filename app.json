@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "TBuddy",
+    "slug": "client-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/tbuddy-app-icon.png",
+    "scheme": "tbuddy",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "site.taulikha.tbuddy"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#A3E7E2",
+        "foregroundImage": "./assets/images/tbuddy-app-icon.png"
+      },
+      "package": "site.taulikha.tbuddy",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/tbuddy-app-icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/tbuddy-mark.png",
+          "imageWidth": 140,
+          "resizeMode": "contain",
+          "backgroundColor": "#F5FBFA"
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
