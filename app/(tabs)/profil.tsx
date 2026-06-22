@@ -1,13 +1,13 @@
-import { CommonActions, useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 
+import { useAuth } from '../../context/auth-context';
 import { AuthService } from '../../services/repository/auth-service';
 import { Pressable, ScrollView, Text, View } from '../../components/tw';
 
 export default function ProfilRoute() {
+  const { signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const navigation = useNavigation();
 
   async function handleLogout() {
     setIsLoading(true);
@@ -20,15 +20,8 @@ export default function ProfilRoute() {
       setIsLoading(false);
     }
 
-    // router.replace('/') can't escape a nested Tab navigator.
-    // Instead, reset the root Stack directly to just the welcome screen.
-    const rootNav = navigation.getParent() ?? navigation;
-    rootNav.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: 'index' }],
-      }),
-    );
+    // Update auth state — AuthGuard in _layout.tsx handles the redirect to /.
+    signOut();
   }
 
   return (

@@ -9,9 +9,12 @@ import {
 
 import { ApiError } from "../services/repository/api-error";
 import { AuthService } from "../services/repository/auth-service";
+import { useAuth } from "../context/auth-context";
 import { Image, Pressable, ScrollView, Text, View } from "./tw";
 
 export function LoginScreen() {
+  const { signIn } = useAuth();
+
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,8 +37,9 @@ export function LoginScreen() {
     setIsLoading(true);
 
     try {
-      await AuthService.login({ identifier: identifier.trim(), password });
-      router.replace('/(tabs)');
+      const loginData = await AuthService.login({ identifier: identifier.trim(), password });
+      // Update auth state — AuthGuard in _layout.tsx handles the redirect to /(tabs).
+      signIn(loginData.user);
     } catch (err) {
       if (err instanceof ApiError && err.code === "REQUEST_CANCELLED") return;
       setError(
