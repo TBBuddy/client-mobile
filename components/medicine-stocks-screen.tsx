@@ -204,7 +204,9 @@ function RestockModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : 'Gagal menambah stok.',
+        err instanceof ApiError
+          ? err.message
+          : 'Gagal menambah stok. Coba lagi.',
       );
     } finally {
       setIsSubmitting(false);
@@ -388,7 +390,9 @@ function AddStockModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : 'Gagal menambahkan obat.',
+        err instanceof ApiError
+          ? err.message
+          : 'Gagal menambahkan obat. Coba lagi.',
       );
     } finally {
       setIsSubmitting(false);
