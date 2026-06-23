@@ -12,6 +12,7 @@ type AuthContextValue = {
   signIn: (user: AuthSessionUser) => void;
   signOut: () => void;
   updateUser: (updates: Partial<AuthSessionUser>) => void;
+  refreshSession: () => Promise<AuthSessionUser>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,8 +57,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => (prev ? { ...prev, ...updates } : null));
   }
 
+  async function refreshSession(): Promise<AuthSessionUser> {
+    const sessionUser = await AuthService.me();
+    setUser(sessionUser);
+    setStatus('authenticated');
+    return sessionUser;
+  }
+
   return (
-    <AuthContext.Provider value={{ user, status, signIn, signOut, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        status,
+        signIn,
+        signOut,
+        updateUser,
+        refreshSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -70,5 +87,5 @@ export function useAuth(): AuthContextValue {
 }
 
 export function needsOnboarding(user: AuthSessionUser | null): boolean {
-  return user?.role === 'PATIENT' && user?.isOnboardingCompleted === false;
+  return user?.role === 'PATIENT' && user.hasActivePatientProfile === false;
 }

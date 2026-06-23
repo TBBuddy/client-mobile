@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { Check, ChevronRight, UserPlus } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import {
@@ -59,7 +60,7 @@ function InputBox({ children }: { children: React.ReactNode }) {
 const INPUT_STYLE = { color: '#263238', fontSize: 15 } as const;
 
 export function OnboardingScreen() {
-  const { updateUser } = useAuth();
+  const { refreshSession } = useAuth();
 
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -139,7 +140,8 @@ export function OnboardingScreen() {
           : undefined,
       });
 
-      updateUser({ isOnboardingCompleted: true });
+      await refreshSession();
+      router.replace('/(tabs)');
     } catch (err) {
       if (err instanceof ApiError && err.code === 'REQUEST_CANCELLED') return;
       setError(

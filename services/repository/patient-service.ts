@@ -1,9 +1,11 @@
 import { apiClient } from './api-client';
 import type {
   CreatePmoRequest,
+  ClosePatientProfileRequest,
   DataResponse,
   MessageResponse,
   PatientDashboard,
+  PatientHistorySummary,
   PatientOnboardingRequest,
   PatientPmo,
   PatientProfile,
@@ -27,6 +29,39 @@ export class PatientService {
     const response = await apiClient.get<DataResponse<PatientProfile>>('/patients/me/profile', {
       signal: options.signal,
     });
+    return response.data.data;
+  }
+
+  static async closeProfile(
+    payload: ClosePatientProfileRequest,
+    options: RepositoryRequestOptions = {},
+  ): Promise<MessageResponse> {
+    const response = await apiClient.post<MessageResponse>(
+      '/patients/me/profile/close',
+      payload,
+      { signal: options.signal },
+    );
+    return response.data;
+  }
+
+  static async getHistory(
+    options: RepositoryRequestOptions = {},
+  ): Promise<PatientHistorySummary[]> {
+    const response = await apiClient.get<DataResponse<PatientHistorySummary[]>>(
+      '/patients/me/history',
+      { signal: options.signal },
+    );
+    return response.data.data;
+  }
+
+  static async getHistoryById(
+    id: string,
+    options: RepositoryRequestOptions = {},
+  ): Promise<PatientProfile> {
+    const response = await apiClient.get<DataResponse<PatientProfile>>(
+      `/patients/me/history/${encodeURIComponent(id)}`,
+      { signal: options.signal },
+    );
     return response.data.data;
   }
 

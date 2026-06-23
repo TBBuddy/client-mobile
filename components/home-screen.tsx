@@ -5,8 +5,13 @@ import {
   Pill,
   ShieldCheck,
 } from "lucide-react-native";
+import { router, type Href } from "expo-router";
+import { useEffect, useState } from "react";
 import { View as RNView } from "react-native";
 
+import { useAuth } from "../context/auth-context";
+import { PatientService } from "../services/repository/patient-service";
+import type { PatientDashboard } from "../services/repository/types";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 const MOCK = {
@@ -14,16 +19,7 @@ const MOCK = {
   greeting: "Selamat pagi",
   greetingEmoji: "☀️",
   subtitle: "Semangat! Kamu tidak sendiri.",
-  treatmentDay: 48,
-  treatmentTotal: 180,
-  treatmentStart: "15 Mei 2026",
-  treatmentEnd: "15 Nov 2026",
-  streak: 12,
-  stockDoses: 18,
-  hasCheckedInToday: false,
 };
-
-const PROGRESS = Math.round((MOCK.treatmentDay / MOCK.treatmentTotal) * 100);
 
 const WEEK_DAYS = [
   { day: "Sel", date: 12, isToday: false, hasCheckin: true },
@@ -36,6 +32,51 @@ const WEEK_DAYS = [
 ] as const;
 
 export function HomeScreen() {
+  const { user } = useAuth();
+  const [dashboard, setDashboard] = useState<PatientDashboard | null>(null);
+  const [hasLoadFailed, setHasLoadFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    PatientService.getDashboard({ signal: controller.signal })
+      .then((patientDashboard) => {
+        setDashboard(patientDashboard);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setHasLoadFailed(true);
+      });
+    return () => controller.abort();
+  }, []);
+
+  const treatmentTotal = dashboard
+    ? dashboard.treatmentDurationMonths * 30
+    : null;
+  const treatmentStart = dashboard?.treatmentStartDate
+    ? new Date(dashboard.treatmentStartDate)
+    : null;
+  const treatmentEnd = dashboard?.estimatedTreatmentEndDate
+    ? new Date(dashboard.estimatedTreatmentEndDate)
+    : null;
+  const viewModel = {
+    ...MOCK,
+    userName:
+      user?.fullName?.trim().split(/\s+/)[0] || user?.username || MOCK.userName,
+    treatmentDay: dashboard?.treatmentDayCount ?? "—",
+    treatmentTotal: treatmentTotal ?? "—",
+    treatmentStart: treatmentStart ? formatDashboardDate(treatmentStart) : "—",
+    treatmentEnd: treatmentEnd ? formatDashboardDate(treatmentEnd) : "—",
+    streak: dashboard?.currentStreak ?? "—",
+    stockDoses: dashboard?.stockDoses ?? "—",
+    hasCheckedInToday: dashboard?.hasCheckedInToday ?? false,
+  };
+  const progress =
+    dashboard && treatmentTotal
+      ? Math.min(
+          100,
+          Math.round((dashboard.treatmentDayCount / treatmentTotal) * 100),
+        )
+      : 0;
+
   return (
     <ScrollView
       className="flex-1 bg-brand-mist"
@@ -47,13 +88,14 @@ export function HomeScreen() {
         <View className="flex-row items-start justify-between">
           <View className="flex-1 gap-0.5 pr-4">
             <Text className="text-[22px] font-extrabold leading-7 text-brand-ink">
-              {MOCK.greeting}, {MOCK.userName} {MOCK.greetingEmoji}
+              {viewModel.greeting}, {viewModel.userName}{" "}
+              {viewModel.greetingEmoji}
             </Text>
             <Text
               className="text-[14px] text-brand-ink"
               style={{ opacity: 0.55 }}
             >
-              {MOCK.subtitle}
+              {viewModel.subtitle}
             </Text>
           </View>
           <Pressable
@@ -103,7 +145,13 @@ export function HomeScreen() {
           <View className="flex-row justify-end">
             <View className="rounded-full bg-brand-yellow px-3 py-1">
               <Text className="text-[11px] font-bold text-brand-ink">
-                Belum check-in
+                {dashboard
+                  ? viewModel.hasCheckedInToday
+                    ? "Sudah check-in"
+                    : "Belum check-in"
+                  : hasLoadFailed
+                    ? "Status tidak tersedia"
+                    : "Memuat status"}
               </Text>
             </View>
           </View>
@@ -131,6 +179,7 @@ export function HomeScreen() {
           <Pressable
             accessibilityRole="button"
             className="h-12 items-center justify-center rounded-control bg-brand-ink"
+            onPress={() => router.push("/(tabs)/check-in")}
           >
             <Text className="text-[15px] font-bold text-brand-white">
               Check-in sekarang
@@ -146,6 +195,7 @@ export function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               className="flex-row items-center gap-0.5"
+              onPress={() => router.push("/history" as Href)}
             >
               <Text className="text-[13px] font-semibold text-brand-aqua">
                 Lihat detail
@@ -164,12 +214,12 @@ export function HomeScreen() {
                 className="text-[15px] font-extrabold text-brand-ink"
                 style={{ opacity: 1 }}
               >
-                {MOCK.treatmentDay}
+                {viewModel.treatmentDay}
               </Text>
-              {` dari ${MOCK.treatmentTotal} hari`}
+              {` dari ${viewModel.treatmentTotal} hari`}
             </Text>
             <Text className="text-[15px] font-extrabold text-brand-ink">
-              {PROGRESS}%
+              {dashboard ? progress : "—"}%
             </Text>
           </View>
 
@@ -177,7 +227,7 @@ export function HomeScreen() {
             <RNView
               style={{
                 height: "100%",
-                width: `${PROGRESS}%`,
+                width: `${progress}%`,
                 backgroundColor: "#A3E7E2",
                 borderRadius: 999,
               }}
@@ -188,7 +238,7 @@ export function HomeScreen() {
             className="text-[12px] text-brand-ink"
             style={{ opacity: 0.45 }}
           >
-            {MOCK.treatmentStart} – {MOCK.treatmentEnd}
+            {viewModel.treatmentStart} – {viewModel.treatmentEnd}
           </Text>
         </View>
 
@@ -202,7 +252,7 @@ export function HomeScreen() {
             </Text>
             <View className="flex-row items-end gap-1.5">
               <Text className="text-[32px] font-extrabold leading-9 text-brand-ink">
-                {MOCK.streak}
+                {viewModel.streak}
               </Text>
               <Flame
                 color="#FF6B35"
@@ -228,7 +278,7 @@ export function HomeScreen() {
             </Text>
             <View className="flex-row items-end gap-1.5">
               <Text className="text-[32px] font-extrabold leading-9 text-brand-ink">
-                {MOCK.stockDoses}
+                {viewModel.stockDoses}
               </Text>
               <Pill
                 color="#263238"
@@ -265,7 +315,11 @@ export function HomeScreen() {
                 Perkembanganmu stabil. Kondisimu baik,{"\n"}pertahankan
                 kebiasaanmu.
               </Text>
-              <Pressable accessibilityRole="button" className="mt-1">
+              <Pressable
+                accessibilityRole="button"
+                className="mt-1"
+                onPress={() => router.push("/(tabs)/komunitas")}
+              >
                 <Text className="text-[13px] font-semibold text-brand-aqua">
                   Lihat detail insight →
                 </Text>
@@ -276,4 +330,12 @@ export function HomeScreen() {
       </View>
     </ScrollView>
   );
+}
+
+function formatDashboardDate(value: Date): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
 }
