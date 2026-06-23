@@ -134,6 +134,28 @@ export type PatientProfile = {
   updatedAt?: string;
 };
 
+export type PatientCheckin = {
+  id: string;
+  patientId: string;
+  checkinDate: string;
+  createdAt: string;
+};
+
+export type CheckinSymptom = {
+  symptomId: string;
+  severity: 'MILD' | 'MODERATE' | 'SEVERE';
+  note?: string;
+};
+
+export type CreateCheckinRequest = {
+  hasTakenMedicine: boolean;
+  hasComplaint: boolean;
+  takenAt?: string;
+  skippedReason?: string;
+  generalNote?: string;
+  symptoms?: CheckinSymptom[];
+};
+
 export type PatientDashboard = {
   treatmentDayCount: number;
   treatmentDurationMonths: number;
@@ -143,7 +165,7 @@ export type PatientDashboard = {
   longestStreak: number;
   totalCheckins: number;
   totalMissedDays: number;
-  todayCheckin: null;
+  todayCheckin: PatientCheckin | null;
   latestAssessment: null;
   stockAlert: null;
   recentBadge: null;
