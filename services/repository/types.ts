@@ -141,6 +141,11 @@ export type PatientCheckin = {
   createdAt: string;
 };
 
+export type Symptom = {
+  id: string;
+  name: string;
+};
+
 export type CheckinSymptom = {
   symptomId: string;
   severity: 'MILD' | 'MODERATE' | 'SEVERE';
@@ -175,6 +180,61 @@ export type CreatePmoRequest = PmoContactRequest;
 
 export type UpdatePmoRequest = Partial<PmoContactRequest> & {
   isPrimary?: boolean;
+};
+
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
+
+export type MedicineStock = {
+  id: string;
+  patientId: string;
+  medicineName: string;
+  medicineType: string | null;
+  quantity: number;
+  unit: string;
+  dailyDose: number;
+  thresholdQuantity: number;
+  daysRemaining: number;
+  isBelowThreshold: boolean;
+  sourceFacilityId: string | null;
+  lastRestockAt: string | null;
+  nextEstimatedEmptyDate: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateMedicineStockRequest = {
+  medicineName: string;
+  medicineType?: string;
+  quantity: number;
+  unit?: string;
+  dailyDose: number;
+  thresholdQuantity?: number;
+};
+
+export type UpdateMedicineStockRequest = {
+  medicineName?: string;
+  medicineType?: string;
+  unit?: string;
+  dailyDose?: number;
+  thresholdQuantity?: number;
+};
+
+export type RestockMedicineRequest = {
+  quantity: number;
+  note?: string;
 };
 
 export type HealthDependency = {
