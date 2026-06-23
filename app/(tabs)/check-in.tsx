@@ -1,10 +1,5 @@
-import { PlaceholderAuthScreen } from '../../components/placeholder-auth-screen';
+import { CheckInScreen } from '../../components/check-in-screen';
 
 export default function CheckInRoute() {
-  return (
-    <PlaceholderAuthScreen
-      title="Check-in"
-      description="Layar check-in harian akan dibangun di sini."
-    />
-  );
+  return <CheckInScreen />;
 }

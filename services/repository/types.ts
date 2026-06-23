@@ -166,6 +166,33 @@ export type ClosePatientProfileRequest = {
   reason?: string;
 };
 
+export type PatientCheckin = {
+  id: string;
+  patientId: string;
+  checkinDate: string;
+  createdAt: string;
+};
+
+export type Symptom = {
+  id: string;
+  name: string;
+};
+
+export type CheckinSymptom = {
+  symptomId: string;
+  severity: 'MILD' | 'MODERATE' | 'SEVERE';
+  note?: string;
+};
+
+export type CreateCheckinRequest = {
+  hasTakenMedicine: boolean;
+  hasComplaint: boolean;
+  takenAt?: string;
+  skippedReason?: string;
+  generalNote?: string;
+  symptoms?: CheckinSymptom[];
+};
+
 export type PatientDashboard = {
   treatmentDayCount: number;
   treatmentDurationMonths: number;
@@ -178,7 +205,7 @@ export type PatientDashboard = {
   totalMissedDays: number;
   stockDoses: number;
   hasCheckedInToday: boolean;
-  todayCheckin: null;
+  todayCheckin: PatientCheckin | null;
   latestAssessment: null;
   stockAlert: null;
   recentBadge: null;
@@ -190,6 +217,61 @@ export type UpdatePmoRequest = Partial<PmoContactRequest> & {
   isPrimary?: boolean;
 };
 
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+};
+
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: PaginationMeta;
+};
+
+export type MedicineStock = {
+  id: string;
+  patientId: string;
+  medicineName: string;
+  medicineType: string | null;
+  quantity: number;
+  unit: string;
+  dailyDose: number;
+  thresholdQuantity: number;
+  daysRemaining: number;
+  isBelowThreshold: boolean;
+  sourceFacilityId: string | null;
+  lastRestockAt: string | null;
+  nextEstimatedEmptyDate: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateMedicineStockRequest = {
+  medicineName: string;
+  medicineType?: string;
+  quantity: number;
+  unit?: string;
+  dailyDose: number;
+  thresholdQuantity?: number;
+};
+
+export type UpdateMedicineStockRequest = {
+  medicineName?: string;
+  medicineType?: string;
+  unit?: string;
+  dailyDose?: number;
+  thresholdQuantity?: number;
+};
+
+export type RestockMedicineRequest = {
+  quantity: number;
+  note?: string;
+};
+
 export type HealthDependency = {
   status: "up" | "down" | "disabled";
 };
@@ -199,16 +281,4 @@ export type HealthData = {
   api: HealthDependency;
   mongodb: HealthDependency;
   redis: HealthDependency;
-};
-
-export type PaginatedResponse<T> = {
-  data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    totalItems: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
 };
