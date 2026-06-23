@@ -12,7 +12,7 @@ import {
   Users,
 } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
 
 import { useAuth } from "../context/auth-context";
@@ -20,7 +20,11 @@ import { ApiError } from "../services/repository/api-error";
 import { AuthService } from "../services/repository/auth-service";
 import { MedicineStockService } from "../services/repository/medicine-stock-service";
 import { PatientService } from "../services/repository/patient-service";
-import type { MedicineStock, PatientProfile } from "../services/repository/types";
+import type {
+  ClosePatientProfileRequest,
+  MedicineStock,
+  PatientProfile,
+} from "../services/repository/types";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 const MONTHS_ID = [
@@ -51,7 +55,7 @@ function getInitials(fullName: string | null, username: string): string {
 }
 
 export function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshSession } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(
@@ -60,10 +64,11 @@ export function ProfileScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isClosingEpisode, setIsClosingEpisode] = useState(false);
   const [stocks, setStocks] = useState<MedicineStock[]>([]);
 
   useEffect(() => {
-    if (user?.role !== "PATIENT") return;
+    if (!user?.hasActivePatientProfile) return;
 
     const controller = new AbortController();
     setIsLoadingProfile(true);
@@ -81,16 +86,51 @@ export function ProfileScreen() {
       });
 
     return () => controller.abort();
-  }, [refetchKey, user?.role]);
+  }, [refetchKey, user?.hasActivePatientProfile]);
 
   useEffect(() => {
-    if (user?.role !== "PATIENT") return;
+    if (!user?.hasActivePatientProfile) return;
     const controller = new AbortController();
     MedicineStockService.listStocks({ signal: controller.signal })
       .then((res) => setStocks(res.data.filter((s) => s.isActive)))
       .catch(() => {});
     return () => controller.abort();
-  }, [user?.role]);
+  }, [user?.hasActivePatientProfile]);
+
+  async function handleCloseEpisode(
+    outcome: ClosePatientProfileRequest["outcome"],
+  ) {
+    setIsClosingEpisode(true);
+    try {
+      await PatientService.closeProfile({ outcome });
+      await refreshSession();
+      router.replace("/(tabs)");
+    } catch (error) {
+      Alert.alert(
+        "Gagal menutup pengobatan",
+        error instanceof ApiError
+          ? error.message
+          : "Terjadi kesalahan. Silakan coba lagi.",
+      );
+    } finally {
+      setIsClosingEpisode(false);
+    }
+  }
+
+  function confirmCloseEpisode(
+    outcome: ClosePatientProfileRequest["outcome"],
+    title: string,
+    message: string,
+  ) {
+    Alert.alert(title, message, [
+      { text: "Kembali", style: "cancel" },
+      {
+        text: outcome === "RECOVERED" ? "Konfirmasi" : "Tutup pengobatan",
+        style: outcome === "RECOVERED" ? "default" : "destructive",
+        onPress: () => void handleCloseEpisode(outcome),
+      },
+    ]);
+  }
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -106,7 +146,7 @@ export function ProfileScreen() {
   if (!user) return null;
 
   const initials = getInitials(user.fullName, user.username);
-  const isPatient = user.role === "PATIENT";
+  const isPatient = user.role === "PATIENT" && user.hasActivePatientProfile;
   const activePmos = profile?.pmos.filter((p) => p.isActive) ?? [];
 
   return (
@@ -434,6 +474,95 @@ export function ProfileScreen() {
             </View>
           )}
         </>
+      )}
+
+      {user.hasPatientHistory && (
+        <Pressable
+          accessibilityRole="button"
+          className="rounded-card border border-brand-border bg-brand-white overflow-hidden active:opacity-70"
+          onPress={() => router.push("/history")}
+        >
+          <View className="flex-row items-center gap-3 px-4 py-4">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-brand-mist">
+              <Clock color="#263238" size={15} strokeWidth={2} />
+            </View>
+            <Text className="flex-1 text-[15px] font-semibold text-brand-ink">
+              Riwayat pengobatan
+            </Text>
+            <ChevronRight
+              color="#263238"
+              size={16}
+              strokeWidth={2}
+              style={{ opacity: 0.3 }}
+            />
+          </View>
+        </Pressable>
+      )}
+
+      {user.hasActivePatientProfile && (
+        <View className="gap-2 rounded-card border border-brand-border bg-brand-white p-4">
+          <Text className="text-[15px] font-bold text-brand-ink">
+            Status pengobatan
+          </Text>
+          <Text
+            className="text-[12px] leading-5 text-brand-ink"
+            style={{ opacity: 0.55 }}
+          >
+            Menutup pengobatan akan memindahkan data episode ini ke riwayat.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            className="h-11 items-center justify-center rounded-control bg-brand-aqua"
+            disabled={isClosingEpisode}
+            onPress={() =>
+              confirmCloseEpisode(
+                "RECOVERED",
+                "Tandai sudah sembuh?",
+                "Episode pengobatan aktif akan ditutup sebagai selesai.",
+              )
+            }
+          >
+            <Text className="text-[14px] font-bold text-brand-ink">
+              Tandai sudah sembuh
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            className="h-11 items-center justify-center rounded-control border border-brand-border"
+            disabled={isClosingEpisode}
+            onPress={() =>
+              confirmCloseEpisode(
+                "DROPPED",
+                "Hentikan pengobatan?",
+                "Episode ini akan ditutup dengan status putus pengobatan.",
+              )
+            }
+          >
+            <Text className="text-[14px] font-semibold text-brand-ink">
+              Hentikan pengobatan
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            className="h-11 items-center justify-center rounded-control border border-red-200"
+            disabled={isClosingEpisode}
+            onPress={() =>
+              confirmCloseEpisode(
+                "CANCELLED",
+                "Batalkan pengobatan?",
+                "Gunakan ini jika onboarding atau episode dibuat secara keliru.",
+              )
+            }
+          >
+            {isClosingEpisode ? (
+              <ActivityIndicator color="#DC2626" />
+            ) : (
+              <Text className="text-[14px] font-semibold text-red-600">
+                Batalkan pengobatan
+              </Text>
+            )}
+          </Pressable>
+        </View>
       )}
 
       <View className="rounded-card border border-brand-border bg-brand-white overflow-hidden">

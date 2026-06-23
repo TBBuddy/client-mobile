@@ -1,5 +1,15 @@
-export type UserRole = 'PATIENT' | 'SUPPORTER' | 'ADMIN';
-export type TreatmentStatus = 'NOT_PATIENT' | 'ON_TREATMENT' | 'RECOVERED' | 'DROPPED';
+export type UserRole = "PATIENT" | "SUPPORTER" | "ADMIN";
+export type TreatmentStatus =
+  | "NOT_PATIENT"
+  | "ON_TREATMENT"
+  | "RECOVERED"
+  | "DROPPED"
+  | "CANCELLED";
+export type PatientProfileStatus =
+  | "ACTIVE"
+  | "RECOVERED"
+  | "DROPPED"
+  | "CANCELLED";
 
 export type RepositoryRequestOptions = {
   signal?: AbortSignal;
@@ -35,7 +45,7 @@ export type RegisterRequest = {
   username: string;
   password: string;
   fullName?: string;
-  role: Extract<UserRole, 'PATIENT' | 'SUPPORTER'>;
+  role: Extract<UserRole, "PATIENT" | "SUPPORTER">;
 };
 
 export type LoginRequest = {
@@ -59,6 +69,8 @@ export type AuthSessionUser = {
   isVerified: boolean;
   isActive: boolean;
   isOnboardingCompleted: boolean;
+  hasActivePatientProfile: boolean;
+  hasPatientHistory: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -117,6 +129,7 @@ export type PatientPmo = {
 export type PatientProfile = {
   id: string;
   userId: string;
+  status: PatientProfileStatus;
   diagnosisDate: string;
   medicineTime: string;
   treatmentStartDate: string | null;
@@ -129,9 +142,28 @@ export type PatientProfile = {
   longestStreak: number;
   totalCheckins: number;
   totalMissedDays: number;
+  endedAt: string | null;
+  endedReason: string | null;
   pmos: PatientPmo[];
   createdAt?: string;
   updatedAt?: string;
+};
+
+export type PatientHistorySummary = {
+  id: string;
+  status: PatientProfileStatus;
+  diagnosisDate: string;
+  treatmentStartDate: string | null;
+  estimatedTreatmentEndDate: string | null;
+  endedAt: string | null;
+  endedReason: string | null;
+  treatmentDurationMonths: number;
+  totalCheckins: number;
+};
+
+export type ClosePatientProfileRequest = {
+  outcome: Extract<PatientProfileStatus, "RECOVERED" | "DROPPED" | "CANCELLED">;
+  reason?: string;
 };
 
 export type PatientCheckin = {
@@ -164,12 +196,15 @@ export type CreateCheckinRequest = {
 export type PatientDashboard = {
   treatmentDayCount: number;
   treatmentDurationMonths: number;
+  treatmentStartDate: string | null;
   estimatedTreatmentEndDate: string | null;
   medicineTime: string;
   currentStreak: number;
   longestStreak: number;
   totalCheckins: number;
   totalMissedDays: number;
+  stockDoses: number;
+  hasCheckedInToday: boolean;
   todayCheckin: PatientCheckin | null;
   latestAssessment: null;
   stockAlert: null;
@@ -238,11 +273,11 @@ export type RestockMedicineRequest = {
 };
 
 export type HealthDependency = {
-  status: 'up' | 'down' | 'disabled';
+  status: "up" | "down" | "disabled";
 };
 
 export type HealthData = {
-  status: 'ok' | 'degraded';
+  status: "ok" | "degraded";
   api: HealthDependency;
   mongodb: HealthDependency;
   redis: HealthDependency;

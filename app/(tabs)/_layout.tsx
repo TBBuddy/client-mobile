@@ -4,7 +4,7 @@ import { CircleCheckBig, Home, User, Users } from 'lucide-react-native';
 import { useAuth } from '../../context/auth-context';
 
 export default function TabsLayout() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   if (status === 'unauthenticated') {
     return <Redirect href="/" />;
@@ -47,6 +47,7 @@ export default function TabsLayout() {
         name="check-in"
         options={{
           title: 'Check-in',
+          href: user?.hasActivePatientProfile ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <CircleCheckBig color={color} size={size} strokeWidth={2} />
           ),

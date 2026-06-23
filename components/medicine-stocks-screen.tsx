@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
-  ChevronRight,
   PackagePlus,
   Pill,
   RefreshCw,
@@ -666,7 +665,7 @@ export function MedicineStocksScreen() {
               className="text-center text-[14px] text-brand-ink"
               style={{ opacity: 0.5 }}
             >
-              Belum ada stok obat.{'\n'}Tap "Tambah" untuk menambahkan.
+              Belum ada stok obat.{'\n'}Tap &quot;Tambah&quot; untuk menambahkan.
             </Text>
           </View>
         )}

@@ -3,133 +3,79 @@ import {
   ChevronRight,
   Flame,
   Pill,
-  RefreshCw,
   ShieldCheck,
-  Trophy,
 } from "lucide-react-native";
+import { router, type Href } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View as RNView } from "react-native";
+import { View as RNView } from "react-native";
 
 import { useAuth } from "../context/auth-context";
-import { ApiError } from "../services/repository/api-error";
 import { PatientService } from "../services/repository/patient-service";
 import type { PatientDashboard } from "../services/repository/types";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
-const DAY_NAMES_ID = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
-const MONTHS_ID = [
-  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
-];
+const MOCK = {
+  userName: "Rani",
+  greeting: "Selamat pagi",
+  greetingEmoji: "☀️",
+  subtitle: "Semangat! Kamu tidak sendiri.",
+};
 
-function getWeekDays() {
-  const today = new Date();
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - 3 + i);
-    return {
-      day: DAY_NAMES_ID[d.getDay()],
-      date: d.getDate(),
-      isToday: i === 3,
-    };
-  });
-}
-
-function formatDateID(isoDate: string): string {
-  const d = new Date(isoDate);
-  return `${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 11) return "Selamat pagi";
-  if (h < 15) return "Selamat siang";
-  if (h < 18) return "Selamat sore";
-  return "Selamat malam";
-}
-
-function getGreetingEmoji(): string {
-  const h = new Date().getHours();
-  if (h < 11) return "☀️";
-  if (h < 18) return "🌤️";
-  return "🌙";
-}
+const WEEK_DAYS = [
+  { day: "Sel", date: 12, isToday: false, hasCheckin: true },
+  { day: "Sen", date: 13, isToday: false, hasCheckin: true },
+  { day: "Rab", date: 14, isToday: true, hasCheckin: false },
+  { day: "Kam", date: 15, isToday: false, hasCheckin: false },
+  { day: "Jum", date: 16, isToday: false, hasCheckin: false },
+  { day: "Sab", date: 17, isToday: false, hasCheckin: false },
+  { day: "Min", date: 18, isToday: false, hasCheckin: false },
+] as const;
 
 export function HomeScreen() {
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState<PatientDashboard | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [refetchKey, setRefetchKey] = useState(0);
+  const [hasLoadFailed, setHasLoadFailed] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
-
     PatientService.getDashboard({ signal: controller.signal })
-      .then((data) => {
-        setDashboard(data);
-        setIsLoading(false);
+      .then((patientDashboard) => {
+        setDashboard(patientDashboard);
       })
-      .catch((err) => {
-        if (err instanceof ApiError && err.code === "REQUEST_CANCELLED") return;
-        setError(
-          err instanceof ApiError ? err.message : "Gagal memuat data.",
-        );
-        setIsLoading(false);
+      .catch(() => {
+        if (!controller.signal.aborted) setHasLoadFailed(true);
       });
-
     return () => controller.abort();
-  }, [refetchKey]);
+  }, []);
 
-  const weekDays = getWeekDays();
-  const displayName = user?.fullName ?? user?.username ?? "Kamu";
-  const greeting = getGreeting();
-  const greetingEmoji = getGreetingEmoji();
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-brand-mist">
-        <ActivityIndicator color="#263238" size="large" />
-      </View>
-    );
-  }
-
-  if (error || !dashboard) {
-    return (
-      <View className="flex-1 items-center justify-center gap-4 bg-brand-mist px-8">
-        <Text
-          className="text-center text-[15px] text-brand-ink"
-          style={{ opacity: 0.6 }}
-        >
-          {error ?? "Gagal memuat data."}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          className="h-11 flex-row items-center gap-2 rounded-control bg-brand-ink px-6"
-          onPress={() => setRefetchKey((v) => v + 1)}
-        >
-          <RefreshCw color="#FFFFFF" size={15} strokeWidth={2} />
-          <Text className="text-[14px] font-bold text-brand-white">
-            Coba lagi
-          </Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  const totalDays = dashboard.treatmentDurationMonths * 30;
-  const progress = Math.min(
-    100,
-    Math.round((dashboard.treatmentDayCount / totalDays) * 100),
-  );
-
-  const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(today.getDate() - dashboard.treatmentDayCount);
-
-  const hasCheckedIn = dashboard.todayCheckin !== null;
+  const treatmentTotal = dashboard
+    ? dashboard.treatmentDurationMonths * 30
+    : null;
+  const treatmentStart = dashboard?.treatmentStartDate
+    ? new Date(dashboard.treatmentStartDate)
+    : null;
+  const treatmentEnd = dashboard?.estimatedTreatmentEndDate
+    ? new Date(dashboard.estimatedTreatmentEndDate)
+    : null;
+  const viewModel = {
+    ...MOCK,
+    userName:
+      user?.fullName?.trim().split(/\s+/)[0] || user?.username || MOCK.userName,
+    treatmentDay: dashboard?.treatmentDayCount ?? "—",
+    treatmentTotal: treatmentTotal ?? "—",
+    treatmentStart: treatmentStart ? formatDashboardDate(treatmentStart) : "—",
+    treatmentEnd: treatmentEnd ? formatDashboardDate(treatmentEnd) : "—",
+    streak: dashboard?.currentStreak ?? "—",
+    stockDoses: dashboard?.stockDoses ?? "—",
+    hasCheckedInToday: dashboard?.hasCheckedInToday ?? false,
+  };
+  const progress =
+    dashboard && treatmentTotal
+      ? Math.min(
+          100,
+          Math.round((dashboard.treatmentDayCount / treatmentTotal) * 100),
+        )
+      : 0;
 
   return (
     <ScrollView
@@ -142,13 +88,14 @@ export function HomeScreen() {
         <View className="flex-row items-start justify-between">
           <View className="flex-1 gap-0.5 pr-4">
             <Text className="text-[22px] font-extrabold leading-7 text-brand-ink">
-              {greeting}, {displayName} {greetingEmoji}
+              {viewModel.greeting}, {viewModel.userName}{" "}
+              {viewModel.greetingEmoji}
             </Text>
             <Text
               className="text-[14px] text-brand-ink"
               style={{ opacity: 0.55 }}
             >
-              Semangat! Kamu tidak sendiri.
+              {viewModel.subtitle}
             </Text>
           </View>
           <Pressable
@@ -161,8 +108,8 @@ export function HomeScreen() {
         </View>
 
         <View className="flex-row justify-between rounded-card border border-brand-border bg-brand-white px-3 py-3">
-          {weekDays.map((item) => (
-            <View className="items-center gap-1" key={`${item.day}-${item.date}`}>
+          {WEEK_DAYS.map((item) => (
+            <View className="items-center gap-1" key={item.day}>
               <Text
                 className="text-[11px] font-semibold text-brand-ink"
                 style={{ opacity: 0.4 }}
@@ -187,7 +134,7 @@ export function HomeScreen() {
                   height: 5,
                   width: 5,
                   borderRadius: 999,
-                  backgroundColor: "transparent",
+                  backgroundColor: item.hasCheckin ? "#A3E7E2" : "transparent",
                 }}
               />
             </View>
@@ -196,16 +143,15 @@ export function HomeScreen() {
 
         <View className="rounded-card bg-brand-aqua p-5 gap-3">
           <View className="flex-row justify-end">
-            <View
-              className="rounded-full px-3 py-1"
-              style={{
-                backgroundColor: hasCheckedIn
-                  ? "rgba(255,255,255,0.7)"
-                  : "#FFE082",
-              }}
-            >
+            <View className="rounded-full bg-brand-yellow px-3 py-1">
               <Text className="text-[11px] font-bold text-brand-ink">
-                {hasCheckedIn ? "Sudah check-in ✓" : "Belum check-in"}
+                {dashboard
+                  ? viewModel.hasCheckedInToday
+                    ? "Sudah check-in"
+                    : "Belum check-in"
+                  : hasLoadFailed
+                    ? "Status tidak tersedia"
+                    : "Memuat status"}
               </Text>
             </View>
           </View>
@@ -219,9 +165,7 @@ export function HomeScreen() {
                 className="text-[13px] leading-5 text-brand-ink"
                 style={{ opacity: 0.65 }}
               >
-                {dashboard.medicineTime
-                  ? `Jadwal minum obat: ${dashboard.medicineTime}`
-                  : "Jangan lupa minum obat sesuai jadwalmu."}
+                Jangan lupa minum obat sesuai jadwalmu.
               </Text>
             </View>
             <View
@@ -232,16 +176,15 @@ export function HomeScreen() {
             </View>
           </View>
 
-          {!hasCheckedIn && (
-            <Pressable
-              accessibilityRole="button"
-              className="h-12 items-center justify-center rounded-control bg-brand-ink"
-            >
-              <Text className="text-[15px] font-bold text-brand-white">
-                Check-in sekarang
-              </Text>
-            </Pressable>
-          )}
+          <Pressable
+            accessibilityRole="button"
+            className="h-12 items-center justify-center rounded-control bg-brand-ink"
+            onPress={() => router.push("/(tabs)/check-in")}
+          >
+            <Text className="text-[15px] font-bold text-brand-white">
+              Check-in sekarang
+            </Text>
+          </Pressable>
         </View>
 
         <View className="rounded-card border border-brand-border bg-brand-white p-5 gap-3">
@@ -252,6 +195,7 @@ export function HomeScreen() {
             <Pressable
               accessibilityRole="button"
               className="flex-row items-center gap-0.5"
+              onPress={() => router.push("/history" as Href)}
             >
               <Text className="text-[13px] font-semibold text-brand-aqua">
                 Lihat detail
@@ -270,12 +214,12 @@ export function HomeScreen() {
                 className="text-[15px] font-extrabold text-brand-ink"
                 style={{ opacity: 1 }}
               >
-                {dashboard.treatmentDayCount}
+                {viewModel.treatmentDay}
               </Text>
-              {` dari ${totalDays} hari`}
+              {` dari ${viewModel.treatmentTotal} hari`}
             </Text>
             <Text className="text-[15px] font-extrabold text-brand-ink">
-              {progress}%
+              {dashboard ? progress : "—"}%
             </Text>
           </View>
 
@@ -294,11 +238,7 @@ export function HomeScreen() {
             className="text-[12px] text-brand-ink"
             style={{ opacity: 0.45 }}
           >
-            {formatDateID(startDate.toISOString())}
-            {" – "}
-            {dashboard.estimatedTreatmentEndDate
-              ? formatDateID(dashboard.estimatedTreatmentEndDate)
-              : "—"}
+            {viewModel.treatmentStart} – {viewModel.treatmentEnd}
           </Text>
         </View>
 
@@ -312,7 +252,7 @@ export function HomeScreen() {
             </Text>
             <View className="flex-row items-end gap-1.5">
               <Text className="text-[32px] font-extrabold leading-9 text-brand-ink">
-                {dashboard.currentStreak}
+                {viewModel.streak}
               </Text>
               <Flame
                 color="#FF6B35"
@@ -334,13 +274,13 @@ export function HomeScreen() {
               className="text-[12px] font-semibold text-brand-ink"
               style={{ opacity: 0.5 }}
             >
-              Rekor terbaik
+              Stok obat
             </Text>
             <View className="flex-row items-end gap-1.5">
               <Text className="text-[32px] font-extrabold leading-9 text-brand-ink">
-                {dashboard.longestStreak}
+                {viewModel.stockDoses}
               </Text>
-              <Trophy
+              <Pill
                 color="#263238"
                 size={18}
                 strokeWidth={1.75}
@@ -351,41 +291,51 @@ export function HomeScreen() {
               className="text-[12px] text-brand-ink"
               style={{ opacity: 0.5 }}
             >
-              hari terpanjang
+              dosis tersisa
             </Text>
           </View>
         </View>
 
-        {dashboard.latestAssessment === null ? null : (
-          <View className="gap-3">
-            <Text className="text-[15px] font-bold text-brand-ink">
-              Insight terbaru
-            </Text>
-            <View className="flex-row items-start gap-4 rounded-card border border-brand-border bg-brand-white p-4">
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-brand-aqua">
-                <ShieldCheck color="#263238" size={22} strokeWidth={2} />
-              </View>
-              <View className="flex-1 gap-1">
-                <Text className="text-[15px] font-bold text-brand-ink">
-                  Risiko rendah
+        <View className="gap-3">
+          <Text className="text-[15px] font-bold text-brand-ink">
+            Insight terbaru
+          </Text>
+          <View className="flex-row items-start gap-4 rounded-card border border-brand-border bg-brand-white p-4">
+            <View className="h-11 w-11 items-center justify-center rounded-full bg-brand-aqua">
+              <ShieldCheck color="#263238" size={22} strokeWidth={2} />
+            </View>
+            <View className="flex-1 gap-1">
+              <Text className="text-[15px] font-bold text-brand-ink">
+                Risiko rendah
+              </Text>
+              <Text
+                className="text-[13px] leading-5 text-brand-ink"
+                style={{ opacity: 0.6 }}
+              >
+                Perkembanganmu stabil. Kondisimu baik,{"\n"}pertahankan
+                kebiasaanmu.
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                className="mt-1"
+                onPress={() => router.push("/(tabs)/komunitas")}
+              >
+                <Text className="text-[13px] font-semibold text-brand-aqua">
+                  Lihat detail insight →
                 </Text>
-                <Text
-                  className="text-[13px] leading-5 text-brand-ink"
-                  style={{ opacity: 0.6 }}
-                >
-                  Perkembanganmu stabil. Kondisimu baik,{"\n"}pertahankan
-                  kebiasaanmu.
-                </Text>
-                <Pressable accessibilityRole="button" className="mt-1">
-                  <Text className="text-[13px] font-semibold text-brand-aqua">
-                    Lihat detail insight →
-                  </Text>
-                </Pressable>
-              </View>
+              </Pressable>
             </View>
           </View>
-        )}
+        </View>
       </View>
     </ScrollView>
   );
+}
+
+function formatDashboardDate(value: Date): string {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(value);
 }
