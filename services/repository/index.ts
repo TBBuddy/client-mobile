@@ -1,3 +1,4 @@
+export { AiAssessmentService } from "./ai-assessment-service";
 export { ApiError } from "./api-error";
 export { AuthService } from "./auth-service";
 export { HealthService } from "./health-service";

@@ -305,6 +305,38 @@ export type RestockMedicineRequest = {
   note?: string;
 };
 
+export type AiRiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
+export type AiAssessment = {
+  _id: string;
+  patient_id: string;
+  patient_profile_id: string;
+  period_start_date: string;
+  period_end_date: string;
+  analyzed_days: number;
+  risk_level: AiRiskLevel;
+  summary: string;
+  recommendation: string | null;
+  should_consult_doctor: boolean;
+  model_name: string;
+  created_at: string;
+};
+
+export type AiAssessmentTimelineItem = {
+  date: string;
+  has_taken_medicine: boolean;
+  severity: SeverityLevel | null;
+  symptoms: string[];
+};
+
+export type AiAssessmentDetail = AiAssessment & {
+  timeline: AiAssessmentTimelineItem[];
+};
+
+export type GenerateAiAssessmentResponse = {
+  job_id: string;
+};
+
 export type HealthDependency = {
   status: "up" | "down" | "disabled";
 };
