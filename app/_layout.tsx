@@ -31,6 +31,7 @@ export default function RootLayout() {
           <Stack.Screen name="checkin-detail/[id]" />
           <Stack.Screen name="medicine-stocks" />
           <Stack.Screen name="edit-pmo/[id]" />
+          <Stack.Screen name="forum/[id]" />
           <Stack.Screen name="notifications" />
         </Stack>
         <StatusBar style="dark" />

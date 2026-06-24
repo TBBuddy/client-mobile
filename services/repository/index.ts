@@ -2,6 +2,7 @@ export { AiAssessmentService } from "./ai-assessment-service";
 export { ApiError } from "./api-error";
 export { AuthService } from "./auth-service";
 export { FacilityService } from "./facility-service";
+export { ForumService } from "./forum-service";
 export { HealthService } from "./health-service";
 export { MedicineStockService } from "./medicine-stock-service";
 export { NotificationService } from "./notification-service";

@@ -432,3 +432,60 @@ export type NotificationListItem = {
   metadata: NotificationMetadata;
   createdAt: string;
 };
+
+export type ForumAuthor = {
+  id: string;
+  username: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+  role: UserRole;
+};
+
+export type ForumPost = {
+  id: string;
+  author: ForumAuthor;
+  title: string | null;
+  content: string | null;
+  imageUrls: string[];
+  likeCount: number;
+  commentCount: number;
+  isLiked: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type ForumComment = {
+  id: string;
+  postId: string;
+  parentCommentId: string | null;
+  author: ForumAuthor;
+  content: string | null;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type ListForumPostsParams = {
+  page?: number;
+  limit?: number;
+  sort?: "latest" | "hot";
+};
+
+export type ListForumCommentsParams = {
+  page?: number;
+  limit?: number;
+};
+
+export type CreateForumPostRequest = {
+  title: string;
+  content: string;
+  imageUrls?: string[];
+};
+
+export type CreateForumCommentRequest = {
+  content: string;
+  parentCommentId?: string;
+};
