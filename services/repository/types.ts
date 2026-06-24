@@ -1,5 +1,9 @@
-export type UserRole = 'PATIENT' | 'SUPPORTER' | 'ADMIN';
-export type TreatmentStatus = 'NOT_PATIENT' | 'ON_TREATMENT' | 'RECOVERED' | 'DROPPED';
+export type UserRole = "PATIENT" | "SUPPORTER" | "ADMIN";
+export type TreatmentStatus =
+  | "NOT_PATIENT"
+  | "ON_TREATMENT"
+  | "RECOVERED"
+  | "DROPPED";
 
 export type RepositoryRequestOptions = {
   signal?: AbortSignal;
@@ -35,7 +39,7 @@ export type RegisterRequest = {
   username: string;
   password: string;
   fullName?: string;
-  role: Extract<UserRole, 'PATIENT' | 'SUPPORTER'>;
+  role: Extract<UserRole, "PATIENT" | "SUPPORTER">;
 };
 
 export type LoginRequest = {
@@ -148,7 +152,7 @@ export type Symptom = {
 
 export type CheckinSymptom = {
   symptomId: string;
-  severity: 'MILD' | 'MODERATE' | 'SEVERE';
+  severity: "MILD" | "MODERATE" | "SEVERE";
   note?: string;
 };
 
@@ -238,12 +242,55 @@ export type RestockMedicineRequest = {
 };
 
 export type HealthDependency = {
-  status: 'up' | 'down' | 'disabled';
+  status: "up" | "down" | "disabled";
 };
 
 export type HealthData = {
-  status: 'ok' | 'degraded';
+  status: "ok" | "degraded";
   api: HealthDependency;
   mongodb: HealthDependency;
   redis: HealthDependency;
+};
+
+export type HealthFacilitySummary = {
+  id: string;
+  name: string;
+  facilityType: string;
+  address: string;
+  city: string;
+  province: string;
+  phoneNumber: string | null;
+  latitude: number;
+  longitude: number;
+  isTbServiceAvailable: boolean;
+};
+
+export type NearbyFacility = HealthFacilitySummary & {
+  distanceKm: number;
+};
+
+export type FacilityDetail = HealthFacilitySummary & {
+  operatingHours: string | null;
+  source: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type GetFacilitiesParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  city?: string;
+  facilityType?: string;
+  isTbServiceAvailable?: boolean;
+  sortBy?: "name" | "city" | "facilityType" | "createdAt";
+  sortOrder?: "asc" | "desc";
+};
+
+export type GetNearbyParams = {
+  lat: number;
+  lng: number;
+  radius?: number;
+  limit?: number;
+  isTbServiceAvailable?: boolean;
 };
