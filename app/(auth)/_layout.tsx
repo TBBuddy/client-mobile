@@ -1,14 +1,18 @@
-import { Redirect, Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { useEffect } from 'react';
 
 import { needsOnboarding, useAuth } from '../../context/auth-context';
 
 export default function AuthLayout() {
   const { status, user } = useAuth();
 
-  if (status === 'authenticated') {
-    if (needsOnboarding(user)) return <Redirect href="/(onboarding)" />;
-    return <Redirect href="/(tabs)" />;
-  }
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+
+    router.replace(needsOnboarding(user) ? '/(onboarding)' : '/(tabs)');
+  }, [status, user]);
+
+  if (status === 'authenticated') return null;
 
   return (
     <Stack

@@ -1,13 +1,19 @@
-import { Redirect, Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { useEffect } from 'react';
 
 import { useAuth } from '../../context/auth-context';
 
 export default function OnboardingLayout() {
   const { status, user } = useAuth();
 
-  if (status === 'unauthenticated') return <Redirect href="/" />;
-  if (status === 'loading') return null;
-  if (user?.hasActivePatientProfile) return <Redirect href="/(tabs)" />;
+  useEffect(() => {
+    if (status === 'unauthenticated') router.replace('/');
+    if (status === 'authenticated' && user?.hasActivePatientProfile) {
+      router.replace('/(tabs)');
+    }
+  }, [status, user?.hasActivePatientProfile]);
+
+  if (status !== 'authenticated' || user?.hasActivePatientProfile) return null;
 
   return (
     <Stack

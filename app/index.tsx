@@ -11,7 +11,7 @@ export default function WelcomeRoute() {
     return <View style={{ flex: 1, backgroundColor: '#F5FBFA' }} />;
   }
 
-  if (status === 'authenticated') {
+  if (status === 'authenticated' && user) {
     if (needsOnboarding(user)) return <Redirect href="/(onboarding)" />;
     return <Redirect href="/(tabs)" />;
   }

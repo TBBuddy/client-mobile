@@ -1,16 +1,17 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { CircleCheckBig, Home, User, Users } from 'lucide-react-native';
+import { useEffect } from 'react';
 
 import { useAuth } from '../../context/auth-context';
 
 export default function TabsLayout() {
   const { status, user } = useAuth();
 
-  if (status === 'unauthenticated') {
-    return <Redirect href="/" />;
-  }
+  useEffect(() => {
+    if (status === 'unauthenticated') router.replace('/');
+  }, [status]);
 
-  if (status === 'loading') {
+  if (status !== 'authenticated') {
     return null;
   }
 

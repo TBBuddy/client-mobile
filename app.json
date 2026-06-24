@@ -19,7 +19,8 @@
       },
       "package": "site.taulikha.tbuddy",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -36,11 +37,19 @@
           "backgroundColor": "#F5FBFA"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4eb18089-9c44-4d62-9800-9c1dd44fd54e"
+      }
+    },
+    "owner": "brahmantiodiaz"
   }
 }
