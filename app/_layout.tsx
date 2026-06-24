@@ -33,6 +33,7 @@ export default function RootLayout() {
           <Stack.Screen name="edit-pmo/[id]" />
           <Stack.Screen name="forum/[id]" />
           <Stack.Screen name="notifications" />
+          <Stack.Screen name="travel-plans" />
         </Stack>
         <StatusBar style="dark" />
         <NotificationBootstrap />

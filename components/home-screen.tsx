@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChevronRight,
   Pill,
+  Plane,
   ShieldCheck,
 } from "lucide-react-native";
 import { router, useFocusEffect, type Href } from "expo-router";
@@ -323,6 +324,30 @@ export function HomeScreen() {
               {isLowStock ? "Segera isi ulang obatmu" : "Kelola stok obatmu"}
             </Text>
             <ChevronRight color="#263238" size={15} strokeWidth={2.5} />
+          </View>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
+          className="overflow-hidden rounded-card border border-brand-border bg-brand-white active:opacity-90"
+          onPress={() => router.push("/travel-plans" as Href)}
+        >
+          <View className="flex-row items-center gap-3 p-4">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-yellow">
+              <Plane color="#263238" size={20} strokeWidth={2} />
+            </View>
+            <View className="flex-1 gap-0.5">
+              <Text className="text-[15px] font-bold text-brand-ink">
+                Mode Perjalanan
+              </Text>
+              <Text
+                className="text-[12px] text-brand-ink"
+                style={{ opacity: 0.55 }}
+              >
+                Cek kesiapan stok obat sebelum bepergian
+              </Text>
+            </View>
+            <ChevronRight color="#263238" size={18} strokeWidth={2} />
           </View>
         </Pressable>
 

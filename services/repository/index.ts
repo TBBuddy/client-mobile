@@ -8,5 +8,6 @@ export { MedicineStockService } from "./medicine-stock-service";
 export { NotificationService } from "./notification-service";
 export { PatientService } from "./patient-service";
 export { TokenStorage } from "./token-storage";
+export { TravelPlanService } from "./travel-plan-service";
 export { UserService } from "./user-service";
 export type * from "./types";

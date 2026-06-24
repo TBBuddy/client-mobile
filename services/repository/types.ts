@@ -497,3 +497,58 @@ export type CreateForumCommentRequest = {
   content: string;
   parentCommentId?: string;
 };
+
+export type TravelPlanStatus =
+  | "PLANNED"
+  | "ONGOING"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export type TravelStockReadinessItem = {
+  stockId: string;
+  medicineName: string;
+  dailyDose: number;
+  durationDays: number;
+  neededQuantity: number;
+  availableQuantity: number;
+  isEnough: boolean;
+  shortageQuantity: number;
+};
+
+export type TravelStockReadiness = {
+  isAllStockEnough: boolean;
+  totalNeeded: number;
+  totalAvailable: number;
+  stocks: TravelStockReadinessItem[];
+};
+
+export type TravelPlan = {
+  id: string;
+  patientId: string;
+  patientProfileId: string;
+  destination: string;
+  departureDate: string;
+  returnDate: string;
+  durationDays: number;
+  status: TravelPlanStatus;
+  isEditable: boolean;
+  stockReadiness: TravelStockReadiness;
+  cancelledAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetTravelPlansParams = {
+  page?: number;
+  limit?: number;
+  sortBy?: "departureDate" | "returnDate" | "createdAt";
+  sortOrder?: "asc" | "desc";
+};
+
+export type CreateTravelPlanRequest = {
+  destination: string;
+  departureDate: string;
+  returnDate: string;
+};
+
+export type UpdateTravelPlanRequest = Partial<CreateTravelPlanRequest>;
