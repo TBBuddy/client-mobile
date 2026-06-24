@@ -32,6 +32,7 @@ export default function RootLayout() {
           <Stack.Screen name="medicine-stocks" />
           <Stack.Screen name="edit-pmo/[id]" />
           <Stack.Screen name="notifications" />
+          <Stack.Screen name="travel-plans" />
         </Stack>
         <StatusBar style="dark" />
         <NotificationBootstrap />
