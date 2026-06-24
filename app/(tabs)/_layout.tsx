@@ -7,7 +7,7 @@ export default function TabsLayout() {
   const { status, user } = useAuth();
 
   if (status === 'unauthenticated') {
-    return <Redirect href="/" />;
+    return <Redirect href="/welcome" />;
   }
 
   if (status === 'loading') {

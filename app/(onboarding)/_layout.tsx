@@ -5,7 +5,7 @@ import { useAuth } from '../../context/auth-context';
 export default function OnboardingLayout() {
   const { status, user } = useAuth();
 
-  if (status === 'unauthenticated') return <Redirect href="/" />;
+  if (status === 'unauthenticated') return <Redirect href="/welcome" />;
   if (status === 'loading') return null;
   if (user?.hasActivePatientProfile) return <Redirect href="/(tabs)" />;
 

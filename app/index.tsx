@@ -2,9 +2,8 @@ import { Redirect } from 'expo-router';
 import { View } from 'react-native';
 
 import { needsOnboarding, useAuth } from '../context/auth-context';
-import { WelcomeScreen } from '../components/welcome-screen';
 
-export default function WelcomeRoute() {
+export default function IndexRoute() {
   const { status, user } = useAuth();
 
   if (status === 'loading') {
@@ -16,5 +15,5 @@ export default function WelcomeRoute() {
     return <Redirect href="/(tabs)" />;
   }
 
-  return <WelcomeScreen />;
+  return <Redirect href="/welcome" />;
 }
