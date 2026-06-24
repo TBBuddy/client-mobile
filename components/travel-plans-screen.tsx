@@ -158,9 +158,13 @@ function StockReadinessBadge({ plan }: { plan: TravelPlan }) {
   const readiness = plan.stockReadiness;
   const Icon = readiness.isAllStockEnough ? PackageCheck : PackageX;
   const color = readiness.isAllStockEnough ? "#10B981" : "#EF4444";
+  const shortage = readiness.stocks.reduce(
+    (total, stock) => total + Math.max(0, stock.shortageQuantity),
+    0,
+  );
   const label = readiness.isAllStockEnough
     ? "Stok cukup"
-    : `Kurang ${Math.max(0, readiness.totalNeeded - readiness.totalAvailable)}`;
+    : `Kurang ${shortage}`;
 
   return (
     <View className="flex-row items-center gap-1.5">
@@ -550,9 +554,9 @@ function TravelPlanDetailModal({
   const isVisible = Boolean(plan) || isLoading || Boolean(error);
 
   const shortage = plan
-    ? Math.max(
+    ? plan.stockReadiness.stocks.reduce(
+        (total, stock) => total + Math.max(0, stock.shortageQuantity),
         0,
-        plan.stockReadiness.totalNeeded - plan.stockReadiness.totalAvailable,
       )
     : 0;
 
@@ -883,6 +887,7 @@ export function TravelPlansScreen() {
   const [isCancelling, setIsCancelling] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
+  const detailAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     abortRef.current?.abort();
@@ -921,22 +926,42 @@ export function TravelPlansScreen() {
   }
 
   async function openDetail(plan: TravelPlan) {
+    detailAbortRef.current?.abort();
+
+    const controller = new AbortController();
+    detailAbortRef.current = controller;
+
     setDetailPlan(plan);
     setIsDetailLoading(true);
     setDetailError(null);
 
     try {
-      const detail = await TravelPlanService.getPlan(plan.id);
+      const detail = await TravelPlanService.getPlan(plan.id, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+
       setDetailPlan(detail);
     } catch (err) {
+      if (err instanceof ApiError && err.code === "REQUEST_CANCELLED") return;
+      if (controller.signal.aborted) return;
+
       setDetailError(
         err instanceof ApiError
           ? err.message
           : "Gagal memuat detail perjalanan.",
       );
     } finally {
-      setIsDetailLoading(false);
+      if (!controller.signal.aborted) setIsDetailLoading(false);
     }
+  }
+
+  function closeDetail() {
+    detailAbortRef.current?.abort();
+    detailAbortRef.current = null;
+    setDetailPlan(null);
+    setDetailError(null);
+    setIsDetailLoading(false);
   }
 
   function handleEdit(plan: TravelPlan) {
@@ -1100,10 +1125,7 @@ export function TravelPlansScreen() {
         error={detailError}
         isLoading={isDetailLoading}
         onCancel={handleCancel}
-        onClose={() => {
-          setDetailPlan(null);
-          setDetailError(null);
-        }}
+        onClose={closeDetail}
         onEdit={handleEdit}
         plan={detailPlan}
       />
