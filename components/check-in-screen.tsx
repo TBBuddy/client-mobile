@@ -1,10 +1,17 @@
-import { Check, CircleCheck, Flame, RefreshCw } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import {
+  Check,
+  CircleCheck,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react-native";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   TextInput as RNTextInput,
 } from "react-native";
+import { useRouter, type Href } from "expo-router";
 
+import { AiAssessmentService } from "../services/repository/ai-assessment-service";
 import { ApiError } from "../services/repository/api-error";
 import { CheckinService } from "../services/repository/checkin-service";
 import { PatientService } from "../services/repository/patient-service";
@@ -55,6 +62,16 @@ export function CheckInScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [checkedInNow, setCheckedInNow] = useState(false);
+
+  const router = useRouter();
+  const [aiStatus, setAiStatus] = useState<
+    "idle" | "generating" | "done" | "error"
+  >("idle");
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const aiMountedRef = useRef(true);
+  useEffect(() => () => {
+    aiMountedRef.current = false;
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -139,6 +156,45 @@ export function CheckInScreen() {
     }
   }
 
+  async function handleGenerateAssessment() {
+    setAiStatus("generating");
+    setAiMessage(null);
+
+    try {
+      const before = await AiAssessmentService.getLatest();
+      const beforeId = before?._id ?? null;
+
+      await AiAssessmentService.generate();
+
+      // The endpoint is async (returns a job id); poll until a new assessment
+      // is persisted, then stop. Give up after ~60s and let the user check back.
+      const maxAttempts = 20;
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        if (!aiMountedRef.current) return;
+
+        const latest = await AiAssessmentService.getLatest();
+        if (latest && latest._id !== beforeId) {
+          setAiStatus("done");
+          return;
+        }
+      }
+
+      setAiStatus("idle");
+      setAiMessage(
+        "Analisis sedang diproses. Cek lagi sebentar lagi di detail check-in.",
+      );
+    } catch (err) {
+      if (!aiMountedRef.current) return;
+      setAiStatus("error");
+      setAiMessage(
+        err instanceof ApiError
+          ? err.message
+          : "Gagal membuat analisis. Coba lagi.",
+      );
+    }
+  }
+
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-brand-mist">
@@ -174,12 +230,12 @@ export function CheckInScreen() {
   const today = new Date();
 
   if (alreadyDone) {
-    const displayStreak = checkedInNow
-      ? dashboard.currentStreak + 1
-      : dashboard.currentStreak;
     const displayTotal = checkedInNow
       ? dashboard.totalCheckins + 1
       : dashboard.totalCheckins;
+
+    const canGenerate = displayTotal >= 7;
+    const todayCheckinId = dashboard.todayCheckin?.id ?? null;
 
     return (
       <ScrollView
@@ -211,34 +267,8 @@ export function CheckInScreen() {
         </View>
 
         <View className="w-full rounded-card border border-brand-border bg-brand-white p-5">
-          <View className="flex-row items-center justify-between">
-            <View className="gap-0.5">
-              <Text
-                className="text-[12px] font-semibold text-brand-ink"
-                style={{ opacity: 0.5 }}
-              >
-                Streak aktif
-              </Text>
-              <View className="flex-row items-end gap-1.5">
-                <Text className="text-[36px] font-extrabold leading-10 text-brand-ink">
-                  {displayStreak}
-                </Text>
-                <Flame
-                  color="#FF6B35"
-                  size={22}
-                  strokeWidth={1.75}
-                  style={{ marginBottom: 5 }}
-                />
-              </View>
-              <Text
-                className="text-[12px] text-brand-ink"
-                style={{ opacity: 0.5 }}
-              >
-                hari berturut-turut
-              </Text>
-            </View>
-
-            <View className="items-end gap-0.5">
+          <View className="flex-row items-center justify-center">
+            <View className="items-center gap-0.5">
               <Text
                 className="text-[12px] font-semibold text-brand-ink"
                 style={{ opacity: 0.5 }}
@@ -256,6 +286,99 @@ export function CheckInScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* ── AI assessment ── */}
+        <View className="w-full gap-3 rounded-card border border-brand-border bg-brand-white p-5">
+          <View className="flex-row items-center gap-2.5">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-brand-aqua">
+              <Sparkles color="#263238" size={16} strokeWidth={2} />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[15px] font-bold text-brand-ink">
+                Analisis AI
+              </Text>
+              <Text
+                className="text-[12px] text-brand-ink"
+                style={{ opacity: 0.5 }}
+              >
+                Ringkasan kondisimu dari riwayat check-in.
+              </Text>
+            </View>
+          </View>
+
+          {aiStatus === "done" ? (
+            <View className="gap-3">
+              <View className="flex-row items-center gap-2">
+                <CircleCheck color="#34C07B" size={18} strokeWidth={2} />
+                <Text className="flex-1 text-[13px] font-semibold text-brand-ink">
+                  Analisis selesai dibuat.
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                className="h-[48px] items-center justify-center rounded-control bg-brand-ink active:opacity-70"
+                onPress={() =>
+                  router.push(
+                    (todayCheckinId
+                      ? `/checkin-detail/${todayCheckinId}`
+                      : "/calendar") as Href,
+                  )
+                }
+              >
+                <Text className="text-[15px] font-bold text-brand-white">
+                  Lihat hasil analisis
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              className="h-[48px] flex-row items-center justify-center gap-2 rounded-control bg-brand-ink"
+              disabled={!canGenerate || aiStatus === "generating"}
+              onPress={handleGenerateAssessment}
+              style={
+                !canGenerate || aiStatus === "generating"
+                  ? { opacity: 0.45 }
+                  : undefined
+              }
+            >
+              {aiStatus === "generating" ? (
+                <>
+                  <ActivityIndicator color="#FFFFFF" />
+                  <Text className="text-[15px] font-bold text-brand-white">
+                    Menganalisis…
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Sparkles color="#FFFFFF" size={16} strokeWidth={2.25} />
+                  <Text className="text-[15px] font-bold text-brand-white">
+                    Buat Analisis AI
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          )}
+
+          {!canGenerate ? (
+            <Text
+              className="text-center text-[12px] text-brand-ink"
+              style={{ opacity: 0.5 }}
+            >
+              Kamu perlu minimal 7 check-in untuk membuat analisis. Saat ini{" "}
+              {displayTotal}/7.
+            </Text>
+          ) : null}
+
+          {aiMessage ? (
+            <Text
+              className="text-center text-[12px] text-brand-ink"
+              style={{ opacity: 0.6 }}
+            >
+              {aiMessage}
+            </Text>
+          ) : null}
         </View>
       </ScrollView>
     );

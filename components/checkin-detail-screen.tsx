@@ -8,9 +8,15 @@ import {
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View as RNView } from "react-native";
 
+import { AiAssessmentService } from "../services/repository/ai-assessment-service";
 import { ApiError } from "../services/repository/api-error";
 import { CheckinService } from "../services/repository/checkin-service";
-import type { DailyCheckin, SeverityLevel } from "../services/repository/types";
+import type {
+  AiAssessment,
+  DailyCheckin,
+  SeverityLevel,
+} from "../services/repository/types";
+import { AiAssessmentCard } from "./ai-assessment-card";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -50,6 +56,7 @@ export function CheckinDetailScreen({ id }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
+  const [assessment, setAssessment] = useState<AiAssessment | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,6 +76,27 @@ export function CheckinDetailScreen({ id }: Props) {
 
     return () => controller.abort();
   }, [id, refetchKey]);
+
+  // Always show the AI assessment covering this check-in's date; fall back to
+  // the most recent assessment when none covers it (e.g. today's check-in).
+  useEffect(() => {
+    if (!checkin) return;
+    const controller = new AbortController();
+
+    AiAssessmentService.listAssessments({ signal: controller.signal })
+      .then((list) => {
+        const dateKey = checkin.checkinDate;
+        const match = list.find(
+          (a) =>
+            dateKey >= a.period_start_date.slice(0, 10) &&
+            dateKey <= a.period_end_date.slice(0, 10),
+        );
+        setAssessment(match ?? list[0] ?? null);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, [checkin]);
 
   if (isLoading) {
     return (
@@ -253,6 +281,9 @@ export function CheckinDetailScreen({ id }: Props) {
           </View>
         </View>
       )}
+
+      {/* ── AI assessment ── */}
+      {assessment ? <AiAssessmentCard assessment={assessment} /> : null}
 
       {/* ── Timestamps ── */}
       <Text
