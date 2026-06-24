@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "417072658694",
+    "project_id": "tbuddy-7ac27",
+    "storage_bucket": "tbuddy-7ac27.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:417072658694:android:290d1f6200dc88fe1ec687",
+        "android_client_info": {
+          "package_name": "site.taulikha.tbuddy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGQcXGLBmLnnt7tJySUc0G7eJDC7Dh3zA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

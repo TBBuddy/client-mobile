@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-  Bell,
   CalendarDays,
   ChevronRight,
   Pill,
@@ -13,6 +12,7 @@ import { View as RNView } from "react-native";
 import { useAuth } from "../context/auth-context";
 import { PatientService } from "../services/repository/patient-service";
 import type { PatientDashboard } from "../services/repository/types";
+import { NotificationBellButton } from "./notification-bell-button";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 const MOCK = {
@@ -118,13 +118,7 @@ export function HomeScreen() {
               {viewModel.subtitle}
             </Text>
           </View>
-          <Pressable
-            accessibilityLabel="Notifikasi"
-            accessibilityRole="button"
-            className="h-10 w-10 items-center justify-center rounded-full border border-brand-border bg-brand-white"
-          >
-            <Bell color="#263238" size={20} strokeWidth={2} />
-          </Pressable>
+          <NotificationBellButton />
         </View>
 
         <View className="gap-2">

@@ -358,3 +358,45 @@ export type GetNearbyParams = {
   limit?: number;
   isTbServiceAvailable?: boolean;
 };
+
+export type NotificationType =
+  | "MEDICINE_REMINDER_BEFORE"
+  | "MEDICINE_REMINDER_TIME"
+  | "MEDICINE_SKIP_ALERT"
+  | "AI_WARNING"
+  | "STOCK_ALERT"
+  | "TRAVEL_REMINDER_H1";
+
+export type NotificationMetadata = {
+  patientProfileId?: string;
+  checkinId?: string;
+  medicineStockId?: string;
+  travelPlanId?: string;
+  [key: string]: unknown;
+};
+
+export type Notification = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  deepLink: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  patientProfileId: string | null;
+  metadata: NotificationMetadata;
+  createdAt: string;
+};
+
+export type NotificationListItem = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  deepLink: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  patientProfileId: string | null;
+  metadata: NotificationMetadata;
+  createdAt: string;
+};
