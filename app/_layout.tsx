@@ -24,8 +24,9 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         />
         <Stack.Screen name="calendar" />
-        <Stack.Screen name="checkin-detail" />
+        <Stack.Screen name="checkin-detail/[id]" />
         <Stack.Screen name="medicine-stocks" />
+        <Stack.Screen name="edit-pmo/[id]" />
       </Stack>
       <StatusBar style="dark" />
     </AuthProvider>

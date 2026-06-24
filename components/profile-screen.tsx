@@ -3,17 +3,15 @@ import {
   CalendarDays,
   ChevronRight,
   Clock,
-  Flame,
   LogOut,
   Pencil,
-  Phone,
   Pill,
   RefreshCw,
   Users,
 } from "lucide-react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
 
 import { useAuth } from "../context/auth-context";
 import { ApiError } from "../services/repository/api-error";
@@ -95,7 +93,20 @@ export function ProfileScreen() {
       .then((res) => setStocks(res.data.filter((s) => s.isActive)))
       .catch(() => {});
     return () => controller.abort();
-  }, [user?.hasActivePatientProfile]);
+  }, [refetchKey, user?.hasActivePatientProfile]);
+
+  // Refetch when returning to this tab (e.g. after editing a PMO), but skip
+  // the initial focus so we don't double-fetch on mount.
+  const hasFocusedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasFocusedRef.current) {
+        hasFocusedRef.current = true;
+        return;
+      }
+      setRefetchKey((v) => v + 1);
+    }, []),
+  );
 
   async function handleCloseEpisode(
     outcome: ClosePatientProfileRequest["outcome"],
@@ -305,32 +316,6 @@ export function ProfileScreen() {
                 className="text-[11px] font-semibold text-brand-ink"
                 style={{ opacity: 0.5 }}
               >
-                Streak aktif
-              </Text>
-              <View className="flex-row items-end gap-1">
-                <Text className="text-[28px] font-extrabold leading-8 text-brand-ink">
-                  {profile.currentStreak}
-                </Text>
-                <Flame
-                  color="#FF6B35"
-                  size={18}
-                  strokeWidth={1.75}
-                  style={{ marginBottom: 3 }}
-                />
-              </View>
-              <Text
-                className="text-[11px] text-brand-ink"
-                style={{ opacity: 0.45 }}
-              >
-                hari
-              </Text>
-            </View>
-
-            <View className="flex-1 rounded-card border border-brand-border bg-brand-white p-4 gap-0.5">
-              <Text
-                className="text-[11px] font-semibold text-brand-ink"
-                style={{ opacity: 0.5 }}
-              >
                 Total check-in
               </Text>
               <Text className="text-[28px] font-extrabold leading-8 text-brand-ink">
@@ -398,15 +383,6 @@ export function ProfileScreen() {
                   {profile.medicineTime}
                 </Text>
               </View>
-              <Pressable
-                accessibilityRole="button"
-                className="flex-row items-center gap-1"
-              >
-                <Text className="text-[12px] font-semibold text-brand-aqua">
-                  Ubah
-                </Text>
-                <ChevronRight color="#A3E7E2" size={13} strokeWidth={2.5} />
-              </Pressable>
             </View>
           </View>
 
@@ -416,27 +392,20 @@ export function ProfileScreen() {
                 <Text className="text-[15px] font-bold text-brand-ink">
                   Pengawas Minum Obat
                 </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  className="flex-row items-center gap-0.5"
-                >
-                  <Text className="text-[13px] font-semibold text-brand-aqua">
-                    Kelola
-                  </Text>
-                  <ChevronRight color="#A3E7E2" size={13} strokeWidth={2.5} />
-                </Pressable>
               </View>
 
               <View className="rounded-card border border-brand-border bg-brand-white overflow-hidden">
                 {activePmos.map((pmo, index) => (
-                  <View
+                  <Pressable
+                    accessibilityRole="button"
                     className={[
-                      "flex-row items-center gap-3 px-4 py-3.5",
+                      "flex-row items-center gap-3 px-4 py-3.5 active:opacity-70",
                       index < activePmos.length - 1
                         ? "border-b border-brand-border"
                         : "",
                     ].join(" ")}
                     key={pmo.id}
+                    onPress={() => router.push(`/edit-pmo/${pmo.id}` as Href)}
                   >
                     <View className="h-9 w-9 items-center justify-center rounded-full bg-brand-aqua">
                       <Users color="#263238" size={16} strokeWidth={2} />
@@ -463,12 +432,16 @@ export function ProfileScreen() {
                         </Text>
                       ) : null}
                     </View>
-                    {(pmo.phoneNumber ?? pmo.whatsappNumber) ? (
-                      <View className="h-8 w-8 items-center justify-center rounded-full bg-brand-mist">
-                        <Phone color="#263238" size={14} strokeWidth={2} />
-                      </View>
-                    ) : null}
-                  </View>
+                    <Pressable
+                        accessibilityRole="button"
+                        className="flex-row items-center gap-0.5"
+                    >
+                      <Text className="text-[13px] font-semibold text-brand-aqua">
+                        Kelola
+                      </Text>
+                      <ChevronRight color="#A3E7E2" size={13} strokeWidth={2.5} />
+                    </Pressable>
+                  </Pressable>
                 ))}
               </View>
             </View>
@@ -564,21 +537,6 @@ export function ProfileScreen() {
           </Pressable>
         </View>
       )}
-
-      <View className="rounded-card border border-brand-border bg-brand-white overflow-hidden">
-        <Pressable
-          accessibilityRole="button"
-          className="flex-row items-center gap-3 px-4 py-4 active:opacity-70"
-        >
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-brand-mist">
-            <Pencil color="#263238" size={15} strokeWidth={2} />
-          </View>
-          <Text className="flex-1 text-[15px] font-semibold text-brand-ink">
-            Edit profil
-          </Text>
-          <ChevronRight color="#263238" size={16} strokeWidth={2} style={{ opacity: 0.3 }} />
-        </Pressable>
-      </View>
 
       <Pressable
         accessibilityRole="button"
