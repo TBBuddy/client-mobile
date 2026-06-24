@@ -1,7 +1,8 @@
 import {
+  AlertTriangle,
   Bell,
+  CalendarDays,
   ChevronRight,
-  Flame,
   Pill,
   ShieldCheck,
 } from "lucide-react-native";
@@ -21,15 +22,31 @@ const MOCK = {
   subtitle: "Semangat! Kamu tidak sendiri.",
 };
 
-const WEEK_DAYS = [
-  { day: "Sel", date: 12, isToday: false, hasCheckin: true },
-  { day: "Sen", date: 13, isToday: false, hasCheckin: true },
-  { day: "Rab", date: 14, isToday: true, hasCheckin: false },
-  { day: "Kam", date: 15, isToday: false, hasCheckin: false },
-  { day: "Jum", date: 16, isToday: false, hasCheckin: false },
-  { day: "Sab", date: 17, isToday: false, hasCheckin: false },
-  { day: "Min", date: 18, isToday: false, hasCheckin: false },
-] as const;
+const DAY_LABELS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"] as const;
+
+function buildCurrentWeek(hasCheckedInToday: boolean) {
+  const now = new Date();
+  const todayDow = now.getDay(); // 0=Sun
+  // Mon-first offset: Mon=0 … Sun=6
+  const monOffset = (todayDow + 6) % 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - monOffset);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const isToday =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    return {
+      day: DAY_LABELS[d.getDay()],
+      date: d.getDate(),
+      isToday,
+      hasCheckin: isToday && hasCheckedInToday,
+    };
+  });
+}
 
 export function HomeScreen() {
   const { user } = useAuth();
@@ -65,10 +82,13 @@ export function HomeScreen() {
     treatmentTotal: treatmentTotal ?? "—",
     treatmentStart: treatmentStart ? formatDashboardDate(treatmentStart) : "—",
     treatmentEnd: treatmentEnd ? formatDashboardDate(treatmentEnd) : "—",
-    streak: dashboard?.currentStreak ?? "—",
     stockDoses: dashboard?.stockDoses ?? "—",
     hasCheckedInToday: dashboard?.hasCheckedInToday ?? false,
   };
+  const weekDays = buildCurrentWeek(viewModel.hasCheckedInToday);
+  const stockDoseCount =
+    typeof dashboard?.stockDoses === "number" ? dashboard.stockDoses : null;
+  const isLowStock = stockDoseCount !== null && stockDoseCount <= 7;
   const progress =
     dashboard && treatmentTotal
       ? Math.min(
@@ -107,8 +127,26 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between px-0.5">
+            <View className="flex-row items-center gap-2">
+              <CalendarDays color="#263238" size={15} strokeWidth={2} style={{ opacity: 0.5 }} />
+              <Text className="text-[13px] font-semibold text-brand-ink" style={{ opacity: 0.65 }}>
+                Check-in minggu ini
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              className="flex-row items-center gap-0.5"
+              onPress={() => router.push("/calendar" as Href)}
+            >
+              <Text className="text-[13px] font-semibold text-brand-aqua">Lihat semua</Text>
+              <ChevronRight color="#A3E7E2" size={14} strokeWidth={2.5} />
+            </Pressable>
+          </View>
+
         <View className="flex-row justify-between rounded-card border border-brand-border bg-brand-white px-3 py-3">
-          {WEEK_DAYS.map((item) => (
+          {weekDays.map((item) => (
             <View className="items-center gap-1" key={item.day}>
               <Text
                 className="text-[11px] font-semibold text-brand-ink"
@@ -139,6 +177,7 @@ export function HomeScreen() {
               />
             </View>
           ))}
+        </View>
         </View>
 
         <View className="rounded-card bg-brand-aqua p-5 gap-3">
@@ -242,59 +281,54 @@ export function HomeScreen() {
           </Text>
         </View>
 
-        <View className="flex-row gap-3">
-          <View className="flex-1 rounded-card border border-brand-border bg-brand-white p-4 gap-1">
-            <Text
-              className="text-[12px] font-semibold text-brand-ink"
-              style={{ opacity: 0.5 }}
-            >
-              Streak aktif
-            </Text>
-            <View className="flex-row items-end gap-1.5">
-              <Text className="text-[32px] font-extrabold leading-9 text-brand-ink">
-                {viewModel.streak}
-              </Text>
-              <Flame
-                color="#FF6B35"
-                size={20}
-                strokeWidth={1.75}
-                style={{ marginBottom: 4 }}
-              />
+        <Pressable
+          accessibilityRole="button"
+          className="overflow-hidden rounded-card border border-brand-border bg-brand-white active:opacity-90"
+          onPress={() => router.push("/medicine-stocks")}
+        >
+          <View className="flex-row items-center gap-3 px-4 pt-4 pb-3">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-aqua">
+              <Pill color="#263238" size={20} strokeWidth={2} />
             </View>
-            <Text
-              className="text-[12px] text-brand-ink"
-              style={{ opacity: 0.5 }}
-            >
-              hari berturut-turut
-            </Text>
-          </View>
-
-          <View className="flex-1 rounded-card border border-brand-border bg-brand-white p-4 gap-1">
-            <Text
-              className="text-[12px] font-semibold text-brand-ink"
-              style={{ opacity: 0.5 }}
-            >
+            <Text className="flex-1 text-[15px] font-bold text-brand-ink">
               Stok obat
             </Text>
-            <View className="flex-row items-end gap-1.5">
-              <Text className="text-[32px] font-extrabold leading-9 text-brand-ink">
-                {viewModel.stockDoses}
-              </Text>
-              <Pill
+            {isLowStock ? (
+              <View className="flex-row items-center gap-1 rounded-full bg-brand-yellow px-2.5 py-1">
+                <AlertTriangle color="#263238" size={12} strokeWidth={2.25} />
+                <Text className="text-[11px] font-bold text-brand-ink">
+                  Stok menipis
+                </Text>
+              </View>
+            ) : (
+              <ChevronRight
                 color="#263238"
                 size={18}
-                strokeWidth={1.75}
-                style={{ marginBottom: 5, opacity: 0.4 }}
+                strokeWidth={2}
+                style={{ opacity: 0.3 }}
               />
-            </View>
+            )}
+          </View>
+
+          <View className="flex-row items-end gap-1.5 px-4 pb-4">
+            <Text className="text-[40px] font-extrabold leading-[44px] text-brand-ink">
+              {viewModel.stockDoses}
+            </Text>
             <Text
-              className="text-[12px] text-brand-ink"
-              style={{ opacity: 0.5 }}
+              className="text-[13px] text-brand-ink"
+              style={{ opacity: 0.5, marginBottom: 7 }}
             >
               dosis tersisa
             </Text>
           </View>
-        </View>
+
+          <View className="flex-row items-center justify-between border-t border-brand-border bg-brand-mist px-4 py-3">
+            <Text className="text-[13px] font-semibold text-brand-ink">
+              {isLowStock ? "Segera isi ulang obatmu" : "Kelola stok obatmu"}
+            </Text>
+            <ChevronRight color="#263238" size={15} strokeWidth={2.5} />
+          </View>
+        </Pressable>
 
         <View className="gap-3">
           <Text className="text-[15px] font-bold text-brand-ink">
