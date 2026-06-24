@@ -283,6 +283,14 @@ export type MedicineStock = {
   updatedAt: string;
 };
 
+export type ListMedicineStocksParams = {
+  page?: number;
+  limit?: number;
+  isActive?: boolean;
+  sortBy?: "createdAt" | "medicineName" | "quantity";
+  sortOrder?: "asc" | "desc";
+};
+
 export type CreateMedicineStockRequest = {
   medicineName: string;
   medicineType?: string;

@@ -2,6 +2,7 @@ import { apiClient } from './api-client';
 import type {
   CreateMedicineStockRequest,
   DataResponse,
+  ListMedicineStocksParams,
   MedicineStock,
   MessageResponse,
   PaginatedResponse,
@@ -13,10 +14,24 @@ import { uuidV4 } from './uuid';
 
 export class MedicineStockService {
   static async listStocks(
+    params: ListMedicineStocksParams = {},
     options: RepositoryRequestOptions = {},
   ): Promise<PaginatedResponse<MedicineStock>> {
     const response = await apiClient.get<PaginatedResponse<MedicineStock>>(
       '/medicine-stocks',
+      { params, signal: options.signal },
+    );
+    return response.data;
+  }
+
+  static async updateStatus(
+    id: string,
+    isActive: boolean,
+    options: RepositoryRequestOptions = {},
+  ): Promise<MessageResponse> {
+    const response = await apiClient.patch<MessageResponse>(
+      `/medicine-stocks/${encodeURIComponent(id)}/status`,
+      { isActive },
       { signal: options.signal },
     );
     return response.data;

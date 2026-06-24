@@ -3,10 +3,13 @@ import { router, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View as RNView } from "react-native";
 
+import { AiAssessmentService } from "../services/repository/ai-assessment-service";
 import { ApiError } from "../services/repository/api-error";
 import { CheckinService } from "../services/repository/checkin-service";
 import type { DailyCheckin } from "../services/repository/types";
 import { Pressable, ScrollView, Text, View } from "./tw";
+
+const AI_MARKER_COLOR = "#C4A6C9";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -79,6 +82,7 @@ export function CalendarScreen() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [checkinMap, setCheckinMap] = useState<Record<string, DailyCheckin>>({});
+  const [assessmentDays, setAssessmentDays] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -107,6 +111,17 @@ export function CalendarScreen() {
 
     return () => controller.abort();
   }, [year, month]);
+
+  // Mark days that have an AI assessment (by the day it was generated).
+  useEffect(() => {
+    const controller = new AbortController();
+    AiAssessmentService.listAssessments({ signal: controller.signal })
+      .then((list) => {
+        setAssessmentDays(new Set(list.map((a) => a.created_at.slice(0, 10))));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   function prevMonth() {
     if (month === 1) { setYear((y) => y - 1); setMonth(12); }
@@ -180,6 +195,10 @@ export function CalendarScreen() {
           <RNView style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#FF6B6B" }} />
           <Text className="text-[11px] text-brand-ink" style={{ opacity: 0.6 }}>Terlewat</Text>
         </View>
+        <View className="flex-row items-center gap-1.5">
+          <RNView style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: AI_MARKER_COLOR }} />
+          <Text className="text-[11px] text-brand-ink" style={{ opacity: 0.6 }}>Analisis AI</Text>
+        </View>
       </View>
 
       {/* ── Calendar grid ── */}
@@ -246,6 +265,8 @@ export function CalendarScreen() {
               {week.map((cell) => {
                 const key = toDateKey(cell.year, cell.month, cell.date);
                 const checkin = cell.isCurrentMonth ? checkinMap[key] : undefined;
+                const hasAssessment =
+                  cell.isCurrentMonth && assessmentDays.has(key);
                 const today = isToday(cell.year, cell.month, cell.date);
                 const isFuture =
                   cell.isCurrentMonth &&
@@ -290,17 +311,36 @@ export function CalendarScreen() {
                       </Text>
                     </RNView>
 
-                    {/* Dot */}
+                    {/* Dots: check-in status + AI assessment marker */}
                     <RNView
                       style={{
-                        width: 6,
+                        flexDirection: "row",
+                        gap: 3,
                         height: 6,
-                        borderRadius: 3,
-                        backgroundColor: checkin
-                          ? checkinDotColor(checkin)
-                          : "transparent",
+                        alignItems: "center",
                       }}
-                    />
+                    >
+                      {checkin ? (
+                        <RNView
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: checkinDotColor(checkin),
+                          }}
+                        />
+                      ) : null}
+                      {hasAssessment ? (
+                        <RNView
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: 3,
+                            backgroundColor: AI_MARKER_COLOR,
+                          }}
+                        />
+                      ) : null}
+                    </RNView>
                   </Pressable>
                 );
               })}

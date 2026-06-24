@@ -77,8 +77,8 @@ export function CheckinDetailScreen({ id }: Props) {
     return () => controller.abort();
   }, [id, refetchKey]);
 
-  // Always show the AI assessment covering this check-in's date; fall back to
-  // the most recent assessment when none covers it (e.g. today's check-in).
+  // Only show an AI assessment on the check-in detail of the day it was
+  // generated (i.e. the day the user requested it) — not on every day.
   useEffect(() => {
     if (!checkin) return;
     const controller = new AbortController();
@@ -87,11 +87,9 @@ export function CheckinDetailScreen({ id }: Props) {
       .then((list) => {
         const dateKey = checkin.checkinDate;
         const match = list.find(
-          (a) =>
-            dateKey >= a.period_start_date.slice(0, 10) &&
-            dateKey <= a.period_end_date.slice(0, 10),
+          (a) => a.created_at.slice(0, 10) === dateKey,
         );
-        setAssessment(match ?? list[0] ?? null);
+        setAssessment(match ?? null);
       })
       .catch(() => {});
 
