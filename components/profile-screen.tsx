@@ -89,7 +89,7 @@ export function ProfileScreen() {
   useEffect(() => {
     if (!user?.hasActivePatientProfile) return;
     const controller = new AbortController();
-    MedicineStockService.listStocks({ signal: controller.signal })
+    MedicineStockService.listStocks({}, { signal: controller.signal })
       .then((res) => setStocks(res.data.filter((s) => s.isActive)))
       .catch(() => {});
     return () => controller.abort();

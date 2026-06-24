@@ -8,9 +8,15 @@ import {
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View as RNView } from "react-native";
 
+import { AiAssessmentService } from "../services/repository/ai-assessment-service";
 import { ApiError } from "../services/repository/api-error";
 import { CheckinService } from "../services/repository/checkin-service";
-import type { DailyCheckin, SeverityLevel } from "../services/repository/types";
+import type {
+  AiAssessment,
+  DailyCheckin,
+  SeverityLevel,
+} from "../services/repository/types";
+import { AiAssessmentCard } from "./ai-assessment-card";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -50,6 +56,7 @@ export function CheckinDetailScreen({ id }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
+  const [assessment, setAssessment] = useState<AiAssessment | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,6 +76,25 @@ export function CheckinDetailScreen({ id }: Props) {
 
     return () => controller.abort();
   }, [id, refetchKey]);
+
+  // Only show an AI assessment on the check-in detail of the day it was
+  // generated (i.e. the day the user requested it) — not on every day.
+  useEffect(() => {
+    if (!checkin) return;
+    const controller = new AbortController();
+
+    AiAssessmentService.listAssessments({ signal: controller.signal })
+      .then((list) => {
+        const dateKey = checkin.checkinDate;
+        const match = list.find(
+          (a) => a.created_at.slice(0, 10) === dateKey,
+        );
+        setAssessment(match ?? null);
+      })
+      .catch(() => {});
+
+    return () => controller.abort();
+  }, [checkin]);
 
   if (isLoading) {
     return (
@@ -253,6 +279,9 @@ export function CheckinDetailScreen({ id }: Props) {
           </View>
         </View>
       )}
+
+      {/* ── AI assessment ── */}
+      {assessment ? <AiAssessmentCard assessment={assessment} /> : null}
 
       {/* ── Timestamps ── */}
       <Text

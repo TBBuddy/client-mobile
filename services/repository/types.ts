@@ -283,6 +283,14 @@ export type MedicineStock = {
   updatedAt: string;
 };
 
+export type ListMedicineStocksParams = {
+  page?: number;
+  limit?: number;
+  isActive?: boolean;
+  sortBy?: "createdAt" | "medicineName" | "quantity";
+  sortOrder?: "asc" | "desc";
+};
+
 export type CreateMedicineStockRequest = {
   medicineName: string;
   medicineType?: string;
@@ -303,6 +311,38 @@ export type UpdateMedicineStockRequest = {
 export type RestockMedicineRequest = {
   quantity: number;
   note?: string;
+};
+
+export type AiRiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
+export type AiAssessment = {
+  _id: string;
+  patient_id: string;
+  patient_profile_id: string;
+  period_start_date: string;
+  period_end_date: string;
+  analyzed_days: number;
+  risk_level: AiRiskLevel;
+  summary: string;
+  recommendation: string | null;
+  should_consult_doctor: boolean;
+  model_name: string;
+  created_at: string;
+};
+
+export type AiAssessmentTimelineItem = {
+  date: string;
+  has_taken_medicine: boolean;
+  severity: SeverityLevel | null;
+  symptoms: string[];
+};
+
+export type AiAssessmentDetail = AiAssessment & {
+  timeline: AiAssessmentTimelineItem[];
+};
+
+export type GenerateAiAssessmentResponse = {
+  job_id: string;
 };
 
 export type HealthDependency = {
@@ -399,6 +439,63 @@ export type NotificationListItem = {
   patientProfileId: string | null;
   metadata: NotificationMetadata;
   createdAt: string;
+};
+
+export type ForumAuthor = {
+  id: string;
+  username: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+  role: UserRole;
+};
+
+export type ForumPost = {
+  id: string;
+  author: ForumAuthor;
+  title: string | null;
+  content: string | null;
+  imageUrls: string[];
+  likeCount: number;
+  commentCount: number;
+  isLiked: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type ForumComment = {
+  id: string;
+  postId: string;
+  parentCommentId: string | null;
+  author: ForumAuthor;
+  content: string | null;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
+export type ListForumPostsParams = {
+  page?: number;
+  limit?: number;
+  sort?: "latest" | "hot";
+};
+
+export type ListForumCommentsParams = {
+  page?: number;
+  limit?: number;
+};
+
+export type CreateForumPostRequest = {
+  title: string;
+  content: string;
+  imageUrls?: string[];
+};
+
+export type CreateForumCommentRequest = {
+  content: string;
+  parentCommentId?: string;
 };
 
 export type TravelPlanStatus =
