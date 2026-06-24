@@ -166,6 +166,39 @@ export type ClosePatientProfileRequest = {
   reason?: string;
 };
 
+export type SeverityLevel = 'NONE' | 'MILD' | 'MODERATE' | 'SEVERE';
+
+export type DailyCheckinSymptom = {
+  id: string;
+  symptomId: string;
+  name: string;
+  severity: SeverityLevel;
+  note: string | null;
+};
+
+export type DailyCheckin = {
+  id: string;
+  checkinDate: string;
+  treatmentDayNumber: number;
+  hasTakenMedicine: boolean;
+  takenAt: string | null;
+  hasComplaint: boolean;
+  severity: SeverityLevel;
+  generalNote: string | null;
+  skippedReason: string | null;
+  symptoms: DailyCheckinSymptom[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetCheckinsParams = {
+  page?: number;
+  limit?: number;
+  year?: number;
+  month?: number;
+  sortOrder?: 'asc' | 'desc';
+};
+
 export type PatientCheckin = {
   id: string;
   patientId: string;

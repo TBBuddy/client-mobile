@@ -1,5 +1,6 @@
 import {
   Bell,
+  CalendarDays,
   ChevronRight,
   Flame,
   Pill,
@@ -21,15 +22,31 @@ const MOCK = {
   subtitle: "Semangat! Kamu tidak sendiri.",
 };
 
-const WEEK_DAYS = [
-  { day: "Sel", date: 12, isToday: false, hasCheckin: true },
-  { day: "Sen", date: 13, isToday: false, hasCheckin: true },
-  { day: "Rab", date: 14, isToday: true, hasCheckin: false },
-  { day: "Kam", date: 15, isToday: false, hasCheckin: false },
-  { day: "Jum", date: 16, isToday: false, hasCheckin: false },
-  { day: "Sab", date: 17, isToday: false, hasCheckin: false },
-  { day: "Min", date: 18, isToday: false, hasCheckin: false },
-] as const;
+const DAY_LABELS = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"] as const;
+
+function buildCurrentWeek(hasCheckedInToday: boolean) {
+  const now = new Date();
+  const todayDow = now.getDay(); // 0=Sun
+  // Mon-first offset: Mon=0 … Sun=6
+  const monOffset = (todayDow + 6) % 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - monOffset);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const isToday =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    return {
+      day: DAY_LABELS[d.getDay()],
+      date: d.getDate(),
+      isToday,
+      hasCheckin: isToday && hasCheckedInToday,
+    };
+  });
+}
 
 export function HomeScreen() {
   const { user } = useAuth();
@@ -69,6 +86,7 @@ export function HomeScreen() {
     stockDoses: dashboard?.stockDoses ?? "—",
     hasCheckedInToday: dashboard?.hasCheckedInToday ?? false,
   };
+  const weekDays = buildCurrentWeek(viewModel.hasCheckedInToday);
   const progress =
     dashboard && treatmentTotal
       ? Math.min(
@@ -107,8 +125,26 @@ export function HomeScreen() {
           </Pressable>
         </View>
 
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between px-0.5">
+            <View className="flex-row items-center gap-2">
+              <CalendarDays color="#263238" size={15} strokeWidth={2} style={{ opacity: 0.5 }} />
+              <Text className="text-[13px] font-semibold text-brand-ink" style={{ opacity: 0.65 }}>
+                Check-in minggu ini
+              </Text>
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              className="flex-row items-center gap-0.5"
+              onPress={() => router.push("/calendar" as Href)}
+            >
+              <Text className="text-[13px] font-semibold text-brand-aqua">Lihat semua</Text>
+              <ChevronRight color="#A3E7E2" size={14} strokeWidth={2.5} />
+            </Pressable>
+          </View>
+
         <View className="flex-row justify-between rounded-card border border-brand-border bg-brand-white px-3 py-3">
-          {WEEK_DAYS.map((item) => (
+          {weekDays.map((item) => (
             <View className="items-center gap-1" key={item.day}>
               <Text
                 className="text-[11px] font-semibold text-brand-ink"
@@ -139,6 +175,7 @@ export function HomeScreen() {
               />
             </View>
           ))}
+        </View>
         </View>
 
         <View className="rounded-card bg-brand-aqua p-5 gap-3">

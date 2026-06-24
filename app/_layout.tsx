@@ -23,6 +23,9 @@ export default function RootLayout() {
           name="history"
           options={{ headerShown: false }}
         />
+        <Stack.Screen name="calendar" />
+        <Stack.Screen name="checkin-detail" />
+        <Stack.Screen name="medicine-stocks" />
       </Stack>
       <StatusBar style="dark" />
     </AuthProvider>
