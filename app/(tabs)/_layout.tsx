@@ -1,5 +1,5 @@
 import { Redirect, Tabs } from 'expo-router';
-import { CircleCheckBig, Home, User, Users } from 'lucide-react-native';
+import { CircleCheckBig, Home, MapPin, User, Users } from 'lucide-react-native';
 
 import { useAuth } from '../../context/auth-context';
 
@@ -50,6 +50,15 @@ export default function TabsLayout() {
           href: user?.hasActivePatientProfile ? undefined : null,
           tabBarIcon: ({ color, size }) => (
             <CircleCheckBig color={color} size={size} strokeWidth={2} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="faskes"
+        options={{
+          title: 'Faskes',
+          tabBarIcon: ({ color, size }) => (
+            <MapPin color={color} size={size} strokeWidth={2} />
           ),
         }}
       />
