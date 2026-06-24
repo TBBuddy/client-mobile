@@ -1,10 +1,5 @@
-import { PlaceholderAuthScreen } from '../../components/placeholder-auth-screen';
+import { ForumScreen } from "../../components/forum-screen";
 
 export default function KomunitasRoute() {
-  return (
-    <PlaceholderAuthScreen
-      title="Komunitas"
-      description="Layar komunitas akan dibangun di sini."
-    />
-  );
+  return <ForumScreen />;
 }

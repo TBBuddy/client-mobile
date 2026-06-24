@@ -4,6 +4,8 @@ import {
   CheckCircle2,
   PackagePlus,
   Pill,
+  Power,
+  PowerOff,
   RefreshCw,
   X,
 } from 'lucide-react-native';
@@ -51,13 +53,21 @@ function StockStatusBadge({ isBelowThreshold }: { isBelowThreshold: boolean }) {
 function StockCard({
   stock,
   onRestock,
+  onToggleStatus,
+  isToggling,
 }: {
   stock: MedicineStock;
   onRestock: (stock: MedicineStock) => void;
+  onToggleStatus: (stock: MedicineStock) => void;
+  isToggling: boolean;
 }) {
+  const inactive = !stock.isActive;
   return (
     <View className="rounded-card border border-brand-border bg-brand-white overflow-hidden">
-      <View className="px-4 pt-4 pb-3 gap-2">
+      <View
+        className="px-4 pt-4 pb-3 gap-2"
+        style={inactive ? { opacity: 0.55 } : undefined}
+      >
         <View className="flex-row items-start justify-between gap-2">
           <View className="flex-1 gap-0.5">
             <Text className="text-[15px] font-bold text-brand-ink" numberOfLines={1}>
@@ -72,7 +82,15 @@ function StockCard({
               </Text>
             ) : null}
           </View>
-          <StockStatusBadge isBelowThreshold={stock.isBelowThreshold} />
+          {inactive ? (
+            <View className="rounded-full bg-brand-mist px-2.5 py-1">
+              <Text className="text-[11px] font-bold text-brand-ink" style={{ opacity: 0.55 }}>
+                Nonaktif
+              </Text>
+            </View>
+          ) : (
+            <StockStatusBadge isBelowThreshold={stock.isBelowThreshold} />
+          )}
         </View>
 
         <View className="flex-row gap-4">
@@ -144,16 +162,46 @@ function StockCard({
         ) : null}
       </View>
 
-      <View className="border-t border-brand-border mx-0">
+      <View className="flex-row border-t border-brand-border">
         <Pressable
           accessibilityRole="button"
-          className="flex-row items-center justify-center gap-1.5 py-2.5 active:opacity-70"
+          className="flex-1 flex-row items-center justify-center gap-1.5 py-2.5 active:opacity-70"
+          disabled={inactive}
           onPress={() => onRestock(stock)}
+          style={inactive ? { opacity: 0.35 } : undefined}
         >
           <PackagePlus color="#263238" size={14} strokeWidth={2} />
           <Text className="text-[13px] font-semibold text-brand-ink">
             Tambah Stok
           </Text>
+        </Pressable>
+
+        <View className="w-px bg-brand-border" />
+
+        <Pressable
+          accessibilityRole="button"
+          className="flex-1 flex-row items-center justify-center gap-1.5 py-2.5 active:opacity-70"
+          disabled={isToggling}
+          onPress={() => onToggleStatus(stock)}
+          style={isToggling ? { opacity: 0.5 } : undefined}
+        >
+          {isToggling ? (
+            <ActivityIndicator color="#263238" size="small" />
+          ) : inactive ? (
+            <>
+              <Power color="#34C07B" size={14} strokeWidth={2} />
+              <Text className="text-[13px] font-semibold" style={{ color: '#34C07B' }}>
+                Aktifkan
+              </Text>
+            </>
+          ) : (
+            <>
+              <PowerOff color="#EF4444" size={14} strokeWidth={2} />
+              <Text className="text-[13px] font-semibold" style={{ color: '#EF4444' }}>
+                Nonaktifkan
+              </Text>
+            </>
+          )}
         </Pressable>
       </View>
     </View>
@@ -564,6 +612,7 @@ export function MedicineStocksScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -574,9 +623,19 @@ export function MedicineStocksScreen() {
     setIsLoading(true);
     setLoadError(null);
 
-    MedicineStockService.listStocks({ signal: controller.signal })
-      .then((res) => {
-        setStocks(res.data.filter((s) => s.isActive));
+    Promise.all([
+      MedicineStockService.listStocks(
+        { isActive: true, limit: 100 },
+        { signal: controller.signal },
+      ),
+      MedicineStockService.listStocks(
+        { isActive: false, limit: 100 },
+        { signal: controller.signal },
+      ),
+    ])
+      .then(([activeRes, inactiveRes]) => {
+        // Active stocks first, inactive ones after.
+        setStocks([...activeRes.data, ...inactiveRes.data]);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -590,7 +649,22 @@ export function MedicineStocksScreen() {
     return () => controller.abort();
   }, [refetchKey]);
 
-  const belowThresholdCount = stocks.filter((s) => s.isBelowThreshold).length;
+  async function handleToggleStatus(stock: MedicineStock) {
+    if (togglingId) return;
+    setTogglingId(stock.id);
+    try {
+      await MedicineStockService.updateStatus(stock.id, !stock.isActive);
+      setRefetchKey((v) => v + 1);
+    } catch {
+      // Surface nothing intrusive; leave the list as-is on failure.
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  const belowThresholdCount = stocks.filter(
+    (s) => s.isActive && s.isBelowThreshold,
+  ).length;
 
   return (
     <View className="flex-1 bg-brand-mist">
@@ -674,8 +748,10 @@ export function MedicineStocksScreen() {
           !loadError &&
           stocks.map((stock) => (
             <StockCard
+              isToggling={togglingId === stock.id}
               key={stock.id}
               onRestock={(s) => setModalMode({ type: 'restock', stock: s })}
+              onToggleStatus={handleToggleStatus}
               stock={stock}
             />
           ))}

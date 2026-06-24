@@ -5,8 +5,8 @@ import {
   Pill,
   ShieldCheck,
 } from "lucide-react-native";
-import { router, type Href } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect, type Href } from "expo-router";
+import { useCallback, useState } from "react";
 import { View as RNView } from "react-native";
 
 import { useAuth } from "../context/auth-context";
@@ -53,17 +53,19 @@ export function HomeScreen() {
   const [dashboard, setDashboard] = useState<PatientDashboard | null>(null);
   const [hasLoadFailed, setHasLoadFailed] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    PatientService.getDashboard({ signal: controller.signal })
-      .then((patientDashboard) => {
-        setDashboard(patientDashboard);
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) setHasLoadFailed(true);
-      });
-    return () => controller.abort();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      PatientService.getDashboard({ signal: controller.signal })
+        .then((patientDashboard) => {
+          setDashboard(patientDashboard);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setHasLoadFailed(true);
+        });
+      return () => controller.abort();
+    }, []),
+  );
 
   const treatmentTotal = dashboard
     ? dashboard.treatmentDurationMonths * 30
