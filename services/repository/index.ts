@@ -1,5 +1,6 @@
 export { ApiError } from "./api-error";
 export { AuthService } from "./auth-service";
+export { FacilityService } from "./facility-service";
 export { HealthService } from "./health-service";
 export { MedicineStockService } from "./medicine-stock-service";
 export { PatientService } from "./patient-service";

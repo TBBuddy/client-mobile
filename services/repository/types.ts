@@ -213,7 +213,7 @@ export type Symptom = {
 
 export type CheckinSymptom = {
   symptomId: string;
-  severity: 'MILD' | 'MODERATE' | 'SEVERE';
+  severity: "MILD" | "MODERATE" | "SEVERE";
   note?: string;
 };
 
@@ -314,4 +314,47 @@ export type HealthData = {
   api: HealthDependency;
   mongodb: HealthDependency;
   redis: HealthDependency;
+};
+
+export type HealthFacilitySummary = {
+  id: string;
+  name: string;
+  facilityType: string;
+  address: string;
+  city: string;
+  province: string;
+  phoneNumber: string | null;
+  latitude: number;
+  longitude: number;
+  isTbServiceAvailable: boolean;
+};
+
+export type NearbyFacility = HealthFacilitySummary & {
+  distanceKm: number;
+};
+
+export type FacilityDetail = HealthFacilitySummary & {
+  operatingHours: string | null;
+  source: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type GetFacilitiesParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+  city?: string;
+  facilityType?: string;
+  isTbServiceAvailable?: boolean;
+  sortBy?: "name" | "city" | "facilityType" | "createdAt";
+  sortOrder?: "asc" | "desc";
+};
+
+export type GetNearbyParams = {
+  lat: number;
+  lng: number;
+  radius?: number;
+  limit?: number;
+  isTbServiceAvailable?: boolean;
 };
