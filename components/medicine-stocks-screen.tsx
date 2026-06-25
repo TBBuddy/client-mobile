@@ -7,21 +7,15 @@ import {
   Power,
   PowerOff,
   RefreshCw,
-  X,
 } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { ActivityIndicator, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ApiError } from '../services/repository/api-error';
 import { MedicineStockService } from '../services/repository/medicine-stock-service';
 import type { MedicineStock } from '../services/repository/types';
+import { BottomSheet } from './bottom-sheet';
 import { Pressable, ScrollView, Text, View } from './tw';
 
 type ModalMode =
@@ -261,36 +255,7 @@ function RestockModal({
   }
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-        style={{ flex: 1 }}
-      >
-        <Pressable
-          className="flex-1"
-          onPress={onClose}
-          style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}
-        />
-        <View className="bg-brand-white rounded-t-[20px] px-5 pt-5 pb-8 gap-4">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-[17px] font-bold text-brand-ink">
-              Tambah Stok
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              className="h-8 w-8 items-center justify-center rounded-full bg-brand-mist active:opacity-70"
-              onPress={onClose}
-            >
-              <X color="#263238" size={16} strokeWidth={2} />
-            </Pressable>
-          </View>
-
+    <BottomSheet onClose={onClose} title="Tambah Stok" visible={visible}>
           {stock ? (
             <Text
               className="text-[13px] text-brand-ink"
@@ -370,9 +335,7 @@ function RestockModal({
               </Text>
             )}
           </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -462,39 +425,7 @@ function AddStockModal({
   } as const;
 
   return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      transparent
-      visible={visible}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' }}
-          onPress={onClose}
-        />
-        <ScrollView
-          className="bg-brand-white rounded-t-[20px]"
-          contentContainerClassName="px-5 pt-5 pb-8 gap-4"
-          keyboardShouldPersistTaps="handled"
-          style={{ maxHeight: '85%' }}
-        >
-          <View className="flex-row items-center justify-between">
-            <Text className="text-[17px] font-bold text-brand-ink">
-              Tambah Obat Baru
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              className="h-8 w-8 items-center justify-center rounded-full bg-brand-mist active:opacity-70"
-              onPress={onClose}
-            >
-              <X color="#263238" size={16} strokeWidth={2} />
-            </Pressable>
-          </View>
-
+    <BottomSheet onClose={onClose} title="Tambah Obat Baru" visible={visible}>
           <View className="gap-1.5">
             <Text className="text-[12px] font-semibold text-brand-ink" style={labelStyle}>
               Nama obat *
@@ -599,9 +530,7 @@ function AddStockModal({
               </Text>
             )}
           </Pressable>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
 

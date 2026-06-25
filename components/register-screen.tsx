@@ -94,6 +94,7 @@ export function RegisterScreen() {
       <Stack.Screen options={{ title: "" }} />
 
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         className="flex-1 bg-brand-mist"
         contentContainerClassName="items-center px-5 pb-10 pt-2"
         contentInsetAdjustmentBehavior="automatic"

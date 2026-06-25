@@ -1,16 +1,12 @@
 import { ArrowLeft, Heart, RefreshCw, Send } from "lucide-react-native";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput,
-} from "react-native";
+import { ActivityIndicator, TextInput } from "react-native";
 import { useRouter } from "expo-router";
 
 import { ApiError } from "../services/repository/api-error";
 import { ForumService } from "../services/repository/forum-service";
 import type { ForumComment, ForumPost } from "../services/repository/types";
+import { BottomSheet } from "./bottom-sheet";
 import { authorName, formatRelativeTime } from "./forum-screen";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
@@ -28,6 +24,7 @@ export function ForumPostScreen({ id }: Props) {
   const [commentText, setCommentText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [showCommentSheet, setShowCommentSheet] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,6 +89,7 @@ export function ForumPostScreen({ id }: Props) {
         prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev,
       );
       setCommentText("");
+      setShowCommentSheet(false);
     } catch (err) {
       setSendError(
         err instanceof ApiError ? err.message : "Gagal mengirim komentar.",
@@ -140,11 +138,7 @@ export function ForumPostScreen({ id }: Props) {
           </Pressable>
         </View>
       ) : (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-          style={{ flex: 1 }}
-        >
+        <View style={{ flex: 1 }}>
           <ScrollView
             className="flex-1"
             contentContainerClassName="px-5 py-5 gap-4"
@@ -228,51 +222,76 @@ export function ForumPostScreen({ id }: Props) {
             )}
           </ScrollView>
 
-          {/* Comment input */}
-          <View className="border-t border-brand-border bg-brand-white px-4 pt-2.5 pb-7 gap-1.5">
-            {sendError ? (
-              <Text className="text-[12px]" style={{ color: "#EF4444" }}>
-                {sendError}
+          {/* Comment trigger */}
+          <View className="border-t border-brand-border bg-brand-white px-4 pt-2.5 pb-7">
+            <Pressable
+              accessibilityRole="button"
+              className="rounded-control border border-brand-border bg-brand-mist px-4 py-3 active:opacity-70"
+              onPress={() => {
+                setSendError(null);
+                setShowCommentSheet(true);
+              }}
+            >
+              <Text className="text-[15px] text-brand-ink" style={{ opacity: 0.5 }}>
+                Tulis komentar…
               </Text>
-            ) : null}
-            <View className="flex-row items-end gap-2">
-              <View className="flex-1 rounded-control border border-brand-border bg-brand-mist px-4 py-2.5">
-                <TextInput
-                  maxLength={2000}
-                  multiline
-                  onChangeText={setCommentText}
-                  placeholder="Tulis komentar…"
-                  placeholderTextColor="rgba(38,50,56,0.35)"
-                  style={{
-                    color: "#263238",
-                    fontSize: 15,
-                    lineHeight: 21,
-                    maxHeight: 100,
-                  }}
-                  value={commentText}
-                />
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                className="h-11 w-11 items-center justify-center rounded-full bg-brand-ink active:opacity-70"
-                disabled={isSending || commentText.trim().length === 0}
-                onPress={handleSendComment}
-                style={
-                  isSending || commentText.trim().length === 0
-                    ? { opacity: 0.45 }
-                    : undefined
-                }
-              >
-                {isSending ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
-                ) : (
-                  <Send color="#FFFFFF" size={17} strokeWidth={2} />
-                )}
-              </Pressable>
-            </View>
+            </Pressable>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       )}
+
+      <BottomSheet
+        onClose={() => setShowCommentSheet(false)}
+        title="Tulis Komentar"
+        visible={showCommentSheet}
+      >
+        {sendError ? (
+          <Text className="text-[13px]" style={{ color: "#EF4444" }}>
+            {sendError}
+          </Text>
+        ) : null}
+        <View className="rounded-control border border-brand-border bg-brand-mist px-4 py-3">
+          <TextInput
+            autoFocus
+            maxLength={2000}
+            multiline
+            onChangeText={setCommentText}
+            placeholder="Tulis komentar…"
+            placeholderTextColor="rgba(38,50,56,0.35)"
+            style={{
+              color: "#263238",
+              fontSize: 15,
+              lineHeight: 22,
+              minHeight: 90,
+              maxHeight: 180,
+              textAlignVertical: "top",
+            }}
+            value={commentText}
+          />
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          className="h-[50px] flex-row items-center justify-center gap-2 rounded-control bg-brand-ink active:opacity-70"
+          disabled={isSending || commentText.trim().length === 0}
+          onPress={handleSendComment}
+          style={
+            isSending || commentText.trim().length === 0
+              ? { opacity: 0.5 }
+              : undefined
+          }
+        >
+          {isSending ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <>
+              <Send color="#FFFFFF" size={16} strokeWidth={2} />
+              <Text className="text-[15px] font-bold text-brand-white">
+                Kirim
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </BottomSheet>
     </View>
   );
 }

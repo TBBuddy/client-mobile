@@ -1,22 +1,12 @@
-import {
-  Heart,
-  MessageCircle,
-  Plus,
-  RefreshCw,
-  X,
-} from "lucide-react-native";
+import { Heart, MessageCircle, Plus, RefreshCw } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput,
-} from "react-native";
+import { ActivityIndicator, TextInput } from "react-native";
 import { router, useFocusEffect, type Href } from "expo-router";
 
 import { ApiError } from "../services/repository/api-error";
 import { ForumService } from "../services/repository/forum-service";
 import type { ForumPost } from "../services/repository/types";
+import { BottomSheet } from "./bottom-sheet";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 const inputStyle = {
@@ -130,8 +120,6 @@ function CreatePostModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!visible) return null;
-
   async function handleSubmit() {
     if (isSubmitting) return;
     setError(null);
@@ -165,38 +153,7 @@ function CreatePostModal({
   }
 
   return (
-    <View
-      style={{
-        position: "absolute",
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 10,
-      }}
-    >
-      <Pressable
-        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.35)" }}
-        onPress={onClose}
-      />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={{ position: "absolute", left: 0, right: 0, bottom: 0 }}
-      >
-        <View className="rounded-t-[20px] bg-brand-white px-5 pt-5 pb-8 gap-4">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-[17px] font-bold text-brand-ink">
-              Buat Post Baru
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              className="h-8 w-8 items-center justify-center rounded-full bg-brand-mist active:opacity-70"
-              onPress={onClose}
-            >
-              <X color="#263238" size={16} strokeWidth={2} />
-            </Pressable>
-          </View>
-
+    <BottomSheet onClose={onClose} title="Buat Post Baru" visible={visible}>
           <View className="gap-1.5">
             <Text className="text-[12px] font-semibold text-brand-ink" style={{ opacity: 0.65 }}>
               Judul *
@@ -247,9 +204,7 @@ function CreatePostModal({
               </Text>
             )}
           </Pressable>
-        </View>
-      </KeyboardAvoidingView>
-    </View>
+    </BottomSheet>
   );
 }
 
