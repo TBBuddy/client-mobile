@@ -17,6 +17,7 @@ import type {
   SeverityLevel,
 } from "../services/repository/types";
 import { AiAssessmentCard } from "./ai-assessment-card";
+import { normalizeCheckinDate } from "./checkin-date";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -31,7 +32,9 @@ const DAYS_ID = [
 ];
 
 function formatCheckinDate(checkin: DailyCheckin): string {
-  const [y, m, d] = checkin.checkinDate.split("-").map(Number);
+  const [y, m, d] = normalizeCheckinDate(checkin.checkinDate)
+    .split("-")
+    .map(Number);
   const dow = new Date(y, m - 1, d).getDay();
   return `${DAYS_ID[dow]}, ${d} ${MONTHS_ID[m - 1]} ${y}`;
 }
@@ -88,7 +91,7 @@ export function CheckinDetailScreen({ id }: Props) {
 
     AiAssessmentService.listAssessments({ signal: controller.signal })
       .then((list) => {
-        const dateKey = checkin.checkinDate;
+        const dateKey = normalizeCheckinDate(checkin.checkinDate);
         const match = list.find(
           (a) => a.created_at.slice(0, 10) === dateKey,
         );
