@@ -2,17 +2,20 @@ import {
   AlertTriangle,
   CalendarDays,
   ChevronRight,
+  Heart,
+  MessageCircle,
   Pill,
   Plane,
-  ShieldCheck,
 } from "lucide-react-native";
 import { router, useFocusEffect, type Href } from "expo-router";
 import { useCallback, useState } from "react";
 import { View as RNView } from "react-native";
 
 import { useAuth } from "../context/auth-context";
+import { ForumService } from "../services/repository/forum-service";
 import { PatientService } from "../services/repository/patient-service";
-import type { PatientDashboard } from "../services/repository/types";
+import type { ForumPost, PatientDashboard } from "../services/repository/types";
+import { authorName, formatRelativeTime } from "./forum-screen";
 import { NotificationBellButton } from "./notification-bell-button";
 import { Pressable, ScrollView, Text, View } from "./tw";
 
@@ -53,6 +56,7 @@ export function HomeScreen() {
   const { user } = useAuth();
   const [dashboard, setDashboard] = useState<PatientDashboard | null>(null);
   const [hasLoadFailed, setHasLoadFailed] = useState(false);
+  const [latestPost, setLatestPost] = useState<ForumPost | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,6 +68,14 @@ export function HomeScreen() {
         .catch(() => {
           if (!controller.signal.aborted) setHasLoadFailed(true);
         });
+      ForumService.listPosts(
+        { sort: "latest", limit: 1 },
+        { signal: controller.signal },
+      )
+        .then((res) => {
+          setLatestPost(res.data.find((p) => !p.isDeleted) ?? null);
+        })
+        .catch(() => {});
       return () => controller.abort();
     }, []),
   );
@@ -351,36 +363,97 @@ export function HomeScreen() {
           </View>
         </Pressable>
 
-        <View className="gap-3">
-          <Text className="text-[15px] font-bold text-brand-ink">
-            Insight terbaru
-          </Text>
-          <View className="flex-row items-start gap-4 rounded-card border border-brand-border bg-brand-white p-4">
-            <View className="h-11 w-11 items-center justify-center rounded-full bg-brand-aqua">
-              <ShieldCheck color="#263238" size={22} strokeWidth={2} />
-            </View>
-            <View className="flex-1 gap-1">
-              <Text className="text-[15px] font-bold text-brand-ink">
-                Risiko rendah
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between px-0.5">
+            <Text className="text-[15px] font-bold text-brand-ink">
+              Post Terbaru
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              className="flex-row items-center gap-0.5"
+              onPress={() => router.push("/(tabs)/komunitas")}
+            >
+              <Text className="text-[13px] font-semibold text-brand-aqua">
+                Lihat semua
               </Text>
-              <Text
-                className="text-[13px] leading-5 text-brand-ink"
-                style={{ opacity: 0.6 }}
-              >
-                Perkembanganmu stabil. Kondisimu baik,{"\n"}pertahankan
-                kebiasaanmu.
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                className="mt-1"
-                onPress={() => router.push("/(tabs)/komunitas")}
-              >
-                <Text className="text-[13px] font-semibold text-brand-aqua">
-                  Lihat detail insight →
-                </Text>
-              </Pressable>
-            </View>
+              <ChevronRight color="#A3E7E2" size={14} strokeWidth={2.5} />
+            </Pressable>
           </View>
+
+          <Pressable
+            accessibilityRole="button"
+            className="flex-row items-start gap-4 rounded-card border border-brand-border bg-brand-white p-4 active:opacity-80"
+            onPress={() => router.push("/(tabs)/komunitas")}
+          >
+            <View className="h-11 w-11 items-center justify-center rounded-full bg-brand-aqua">
+              <MessageCircle color="#263238" size={22} strokeWidth={2} />
+            </View>
+            {latestPost ? (
+              <View className="flex-1 gap-1">
+                <Text
+                  className="text-[15px] font-bold leading-5 text-brand-ink"
+                  numberOfLines={2}
+                >
+                  {latestPost.title ?? "(Post dihapus)"}
+                </Text>
+                <Text
+                  className="text-[12px] text-brand-ink"
+                  style={{ opacity: 0.5 }}
+                >
+                  {authorName(latestPost.author)} ·{" "}
+                  {formatRelativeTime(latestPost.createdAt)}
+                </Text>
+                <View className="mt-0.5 flex-row items-center gap-4">
+                  <View className="flex-row items-center gap-1.5">
+                    <Heart
+                      color="#263238"
+                      size={14}
+                      strokeWidth={2}
+                      style={{ opacity: 0.5 }}
+                    />
+                    <Text
+                      className="text-[12px] font-semibold text-brand-ink"
+                      style={{ opacity: 0.5 }}
+                    >
+                      {latestPost.likeCount}
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center gap-1.5">
+                    <MessageCircle
+                      color="#263238"
+                      size={14}
+                      strokeWidth={2}
+                      style={{ opacity: 0.5 }}
+                    />
+                    <Text
+                      className="text-[12px] font-semibold text-brand-ink"
+                      style={{ opacity: 0.5 }}
+                    >
+                      {latestPost.commentCount}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View className="flex-1 justify-center gap-1">
+                <Text className="text-[15px] font-bold text-brand-ink">
+                  Belum ada post
+                </Text>
+                <Text
+                  className="text-[13px] leading-5 text-brand-ink"
+                  style={{ opacity: 0.6 }}
+                >
+                  Jadilah yang pertama berbagi di Komunitas.
+                </Text>
+              </View>
+            )}
+            <ChevronRight
+              color="#263238"
+              size={18}
+              strokeWidth={2}
+              style={{ opacity: 0.3, marginTop: 2 }}
+            />
+          </Pressable>
         </View>
       </View>
     </ScrollView>

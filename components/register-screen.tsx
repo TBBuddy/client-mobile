@@ -317,26 +317,6 @@ export function RegisterScreen() {
                 </Text>
               )}
             </Pressable>
-
-            <Text
-              className="text-center text-[12px] leading-5 text-brand-ink"
-              style={{ opacity: 0.5 }}
-            >
-              Dengan membuat akun, kamu menyetujui{"\n"}
-              <Text
-                className="text-[12px] font-semibold text-brand-aqua"
-                style={{ opacity: 1 }}
-              >
-                Syarat &amp; Ketentuan
-              </Text>{" "}
-              dan{" "}
-              <Text
-                className="text-[12px] font-semibold text-brand-aqua"
-                style={{ opacity: 1 }}
-              >
-                Kebijakan Privasi
-              </Text>
-            </Text>
           </View>
 
           <View className="flex-row items-center justify-center gap-1">
