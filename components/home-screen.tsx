@@ -69,7 +69,7 @@ export function HomeScreen() {
           if (!controller.signal.aborted) setHasLoadFailed(true);
         });
       ForumService.listPosts(
-        { sort: "latest", limit: 1 },
+        { sort: "latest", limit: 10 },
         { signal: controller.signal },
       )
         .then((res) => {
