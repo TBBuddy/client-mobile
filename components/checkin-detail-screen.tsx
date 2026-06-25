@@ -26,11 +26,14 @@ const MONTHS_ID = [
   "Juli", "Agustus", "September", "Oktober", "November", "Desember",
 ];
 
-function formatDateFull(isoDate: string): string {
-  const [y, m, d] = isoDate.split("-").map(Number);
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const DAYS_ID = [
+  "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu",
+];
+
+function formatCheckinDate(checkin: DailyCheckin): string {
+  const [y, m, d] = checkin.checkinDate.split("-").map(Number);
   const dow = new Date(y, m - 1, d).getDay();
-  return `${days[dow]}, ${d} ${MONTHS_ID[m - 1]} ${y}`;
+  return `${DAYS_ID[dow]}, ${d} ${MONTHS_ID[m - 1]} ${y}`;
 }
 
 function severityLabel(level: SeverityLevel): string {
@@ -137,7 +140,7 @@ export function CheckinDetailScreen({ id }: Props) {
       {/* ── Header ── */}
       <View className="gap-1">
         <Text className="text-[20px] font-extrabold text-brand-ink">
-          {formatDateFull(checkin.checkinDate)}
+          {formatCheckinDate(checkin)}
         </Text>
         <Text
           className="text-[13px] text-brand-ink"

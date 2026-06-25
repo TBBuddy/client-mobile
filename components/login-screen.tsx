@@ -1,8 +1,11 @@
+import { useHeaderHeight } from "@react-navigation/elements";
 import { router, Stack } from "expo-router";
 import { Eye, EyeOff } from "lucide-react-native";
 import { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   TextInput as RNTextInput,
   type TextInput as RNTextInputType,
 } from "react-native";
@@ -14,6 +17,7 @@ import { Image, Pressable, ScrollView, Text, View } from "./tw";
 
 export function LoginScreen() {
   const { signIn } = useAuth();
+  const headerHeight = useHeaderHeight();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -55,8 +59,12 @@ export function LoginScreen() {
     <>
       <Stack.Screen options={{ title: "" }} />
 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={headerHeight}
+        style={{ flex: 1 }}
+      >
       <ScrollView
-        automaticallyAdjustKeyboardInsets
         className="flex-1 bg-brand-mist"
         contentContainerClassName="items-center px-5 pb-10 pt-2"
         contentInsetAdjustmentBehavior="automatic"
@@ -208,6 +216,7 @@ export function LoginScreen() {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </>
   );
 }

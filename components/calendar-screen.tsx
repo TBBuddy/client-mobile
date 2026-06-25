@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react-native";
-import { router, type Href } from "expo-router";
-import { useEffect, useState } from "react";
+import { router, useFocusEffect, type Href } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, View as RNView } from "react-native";
 
 import { AiAssessmentService } from "../services/repository/ai-assessment-service";
@@ -83,34 +83,46 @@ export function CalendarScreen() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [checkinMap, setCheckinMap] = useState<Record<string, DailyCheckin>>({});
   const [assessmentDays, setAssessmentDays] = useState<Set<string>>(new Set());
+  const [todayCheckin, setTodayCheckin] = useState<DailyCheckin | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setIsLoading(true);
-    setLoadError(null);
+  // Refetch on focus (so a check-in just made shows up) and on month change.
+  // Also fetch today's check-in so it can be pinned onto today's local cell
+  // even if the backend filed it under the previous (UTC) day.
+  useFocusEffect(
+    useCallback(() => {
+      const controller = new AbortController();
+      setIsLoading(true);
+      setLoadError(null);
 
-    CheckinService.getCheckins(
-      { year, month, limit: 100, sortOrder: "asc" },
-      { signal: controller.signal },
-    )
-      .then((res) => {
-        const map: Record<string, DailyCheckin> = {};
-        for (const c of res.data) {
-          map[c.checkinDate] = c;
-        }
-        setCheckinMap(map);
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        if (err instanceof ApiError && err.code === "REQUEST_CANCELLED") return;
-        setLoadError(err instanceof ApiError ? err.message : "Gagal memuat data.");
-        setIsLoading(false);
-      });
+      Promise.all([
+        CheckinService.getCheckins(
+          { year, month, limit: 100, sortOrder: "asc" },
+          { signal: controller.signal },
+        ),
+        CheckinService.getTodayCheckin({ signal: controller.signal }),
+      ])
+        .then(([res, today]) => {
+          const map: Record<string, DailyCheckin> = {};
+          for (const c of res.data) {
+            map[c.checkinDate] = c;
+          }
+          setCheckinMap(map);
+          setTodayCheckin(today);
+          setIsLoading(false);
+        })
+        .catch((err) => {
+          if (err instanceof ApiError && err.code === "REQUEST_CANCELLED") return;
+          setLoadError(
+            err instanceof ApiError ? err.message : "Gagal memuat data.",
+          );
+          setIsLoading(false);
+        });
 
-    return () => controller.abort();
-  }, [year, month]);
+      return () => controller.abort();
+    }, [year, month]),
+  );
 
   // Mark days that have an AI assessment (by the day it was generated).
   useEffect(() => {
@@ -140,6 +152,23 @@ export function CalendarScreen() {
   for (let i = 0; i < cells.length; i += 7) {
     weeks.push(cells.slice(i, i + 7));
   }
+
+  // Pin today's check-in onto today's local cell when it was actually created
+  // today (device-local), so a fresh check-in always shows on today even if the
+  // backend filed it under the previous UTC day. Deduped by id.
+  const todayKey = toDateKey(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const checkinByDate: Record<string, DailyCheckin> =
+    todayCheckin &&
+    new Date(todayCheckin.createdAt).toDateString() === now.toDateString()
+      ? {
+          ...Object.fromEntries(
+            Object.entries(checkinMap).filter(
+              ([, c]) => c.id !== todayCheckin.id,
+            ),
+          ),
+          [todayKey]: todayCheckin,
+        }
+      : checkinMap;
 
   // Don't allow navigating into the future beyond current month
   const nowYear = now.getFullYear();
@@ -264,23 +293,24 @@ export function CalendarScreen() {
             >
               {week.map((cell) => {
                 const key = toDateKey(cell.year, cell.month, cell.date);
-                const checkin = cell.isCurrentMonth ? checkinMap[key] : undefined;
+                const checkin = cell.isCurrentMonth ? checkinByDate[key] : undefined;
                 const hasAssessment =
                   cell.isCurrentMonth && assessmentDays.has(key);
                 const today = isToday(cell.year, cell.month, cell.date);
+                const detailId = checkin?.id ?? null;
                 const isFuture =
                   cell.isCurrentMonth &&
                   new Date(cell.year, cell.month - 1, cell.date) > now;
 
                 return (
                   <Pressable
-                    accessibilityRole={checkin ? "button" : "none"}
+                    accessibilityRole={detailId ? "button" : "none"}
                     className="flex-1 items-center py-3 gap-1 active:opacity-60"
-                    disabled={!checkin}
+                    disabled={!detailId}
                     key={key}
                     onPress={() => {
-                      if (checkin) {
-                        router.push(`/checkin-detail/${checkin.id}` as Href);
+                      if (detailId) {
+                        router.push(`/checkin-detail/${detailId}` as Href);
                       }
                     }}
                   >

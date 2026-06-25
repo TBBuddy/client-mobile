@@ -1,6 +1,8 @@
 import {
   Check,
+  ChevronRight,
   CircleCheck,
+  FileText,
   RefreshCw,
   Sparkles,
 } from "lucide-react-native";
@@ -156,6 +158,23 @@ export function CheckInScreen() {
     }
   }
 
+  async function handleOpenTodayCheckin(knownId: string | null) {
+    if (knownId) {
+      router.push(`/checkin-detail/${knownId}` as Href);
+      return;
+    }
+    // Just checked in this session — the dashboard hasn't refreshed yet, so
+    // fetch today's check-in id directly.
+    try {
+      const todayCheckin = await CheckinService.getTodayCheckin();
+      if (todayCheckin?.id) {
+        router.push(`/checkin-detail/${todayCheckin.id}` as Href);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   async function handleGenerateAssessment() {
     setAiStatus("generating");
     setAiMessage(null);
@@ -287,6 +306,26 @@ export function CheckInScreen() {
             </View>
           </View>
         </View>
+
+        {/* ── View today's check-in ── */}
+        <Pressable
+          accessibilityRole="button"
+          className="w-full flex-row items-center gap-3 rounded-card border border-brand-border bg-brand-white p-4 active:opacity-80"
+          onPress={() => handleOpenTodayCheckin(todayCheckinId)}
+        >
+          <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-aqua">
+            <FileText color="#263238" size={18} strokeWidth={2} />
+          </View>
+          <Text className="flex-1 text-[15px] font-bold text-brand-ink">
+            Lihat detail check-in hari ini
+          </Text>
+          <ChevronRight
+            color="#263238"
+            size={18}
+            strokeWidth={2}
+            style={{ opacity: 0.3 }}
+          />
+        </Pressable>
 
         {/* ── AI assessment ── */}
         <View className="w-full gap-3 rounded-card border border-brand-border bg-brand-white p-5">

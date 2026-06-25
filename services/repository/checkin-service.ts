@@ -32,6 +32,16 @@ export class CheckinService {
     return response.data.data;
   }
 
+  static async getTodayCheckin(
+    options: RepositoryRequestOptions = {},
+  ): Promise<DailyCheckin | null> {
+    const response = await apiClient.get<{ data: DailyCheckin | null }>(
+      '/checkins/today',
+      { signal: options.signal },
+    );
+    return response.data.data;
+  }
+
   static async createCheckin(
     payload: CreateCheckinRequest,
     options: RepositoryRequestOptions = {},
